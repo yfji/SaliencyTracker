@@ -1,0 +1,9 @@
+*.d
+*.o
+*.jpg
+*.jpeg
+*.py
+*.txt
+*~
+*.model
+SalientDetect
