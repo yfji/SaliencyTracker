@@ -32,7 +32,7 @@ struct queue_compare{
 
 void draw_bbox(Mat& frame, vector<Target>& targets, int width);
 
-void detect_bbox(Mat& src, vector<Target>& targets, MySVM& classifier, const Size& offset,  bool bCurFrame);
+void detect_bbox(const Mat& src, vector<Target>& targets, MySVM& classifier, const Size& offset,  bool bCurFrame);
 
 void detect_bbox_kcf(Mat& src, vector<Target>& targets);
 

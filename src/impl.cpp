@@ -19,7 +19,7 @@ void draw_bbox(Mat& frame, vector<Target>& targets, int width){
 		rectangle(frame, targets[i].location, s, width);
 }
 
-void detect_bbox(Mat& src, vector<Target>& targets, MySVM& classifier, const Size& offset, bool bCurFrame){
+void detect_bbox(const Mat& src, vector<Target>& targets, MySVM& classifier, const Size& offset, bool bCurFrame){
 	//one frame
 	Mat scaled;
 	int scale=2;
@@ -35,14 +35,14 @@ void detect_bbox(Mat& src, vector<Target>& targets, MySVM& classifier, const Siz
 	extern vector<HogParam> params;
 
 	max_area=(double)(src.cols*src.rows/2);
-	min_area=100.0;
+	min_area=25.0;
 	if(targets.size()>0){
 		Rect& max_loc=targets[0].location;
 		Rect& min_loc=targets[targets.size()-1].location;
 		max_area=(double)min(max_area, max_loc.height*max_loc.width*2.0);
 		min_area=(double)max(min_area, min_loc.height*min_loc.width/2.0);
 	}
-	double ratio[2]={0.6,1.3};	//w/h
+	double ratio[2]={0.2,0.9};	//w/h
 	cvFindContours(&ipl, pStorage, &pContour, sizeof(CvContour), CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
 
 	vector<Target>::iterator iter=targets.begin();
@@ -50,18 +50,18 @@ void detect_bbox(Mat& src, vector<Target>& targets, MySVM& classifier, const Siz
 
 	for(;pContour;pContour=pContour->h_next){
 		double area=fabs(cvContourArea(pContour))*scale*scale;
-		if(area>max_area or area<min_area){
-			cvSeqRemove(pContour,0);
-			continue;
-		}
+		//if(area>max_area or area<min_area){
+		//	cvSeqRemove(pContour,0);
+		//	continue;
+		//}
 		CvRect bbox=cvBoundingRect(pContour,0);
 		Rect raw_bbox=Rect(bbox.x*scale, bbox.y*scale, bbox.width*scale, bbox.height*scale);
 		double bw=1.0*raw_bbox.width;
 		double bh=1.0*raw_bbox.height;
-		if(bw/bh<ratio[0] or bw/bh>ratio[1]){
-			cvSeqRemove(pContour,0);
-			continue;
-		}
+		//if(bw/bh<ratio[0] or bw/bh>ratio[1]){
+		//	cvSeqRemove(pContour,0);
+		//	continue;
+		//}
 
 		Mat roi=src(raw_bbox);
 		int res=detectSVM(roi, params, classifier);

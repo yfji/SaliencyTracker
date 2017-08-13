@@ -19,13 +19,15 @@ string datasets[]={
 		"Jogging",
 		"Panda",
 		"BlurCar2",
-		"Dog"
+		"Dog",
+		"Crossing",
+		"Bolt"
 };
 
 int main(int argc, char** argv){
 	srand(time(NULL));
 
-	string dataset=datasets[3];
+	string dataset="Walking2";
 	string benchmark_root="I:/TestOpenCV/Images/benchmark/";
 	string gt_file=benchmark_root+dataset+"/groundtruth_rect.txt";
 	string file_list=benchmark_root+dataset+"/image_file.txt";
@@ -35,8 +37,8 @@ int main(int argc, char** argv){
 	//printParams(params);
 
 	//showFrame(file_list, gt_file);
-	runTracker(file_list, gt_file,true);
-
+	//runTracker(file_list, gt_file,true);
+	runTrackerSimple(file_list, gt_file);
 	return 0;
 }
 

@@ -31,4 +31,8 @@ void readParamsFromFile(string param_file, vector<HogParam>& params);
 
 void printParams(vector<HogParam>& params);
 
+void padROI(Rect& roi, const Size& bounding, float alpha=1.15);
+
+void alignSize(const Size& bbox, Size& size);
+
 #endif /* SRC_UTIL_H_ */

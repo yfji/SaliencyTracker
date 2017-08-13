@@ -81,59 +81,51 @@ Mat detectSaliency(Mat& src){
 	return sa;
 }
 
-void createNegativeSamples(Mat& frame, vector<Rect>& bbox, vector<Rect>& neg_rois, float overlap){
+void createNegativeSamples(Mat& frame, Rect& bbox, vector<Rect>& neg_rois, float overlap){
 	int neg_crop=NEG_CROP;	//total
 	float sz_overlap=overlap;
 
 	int neg_cnt=0;
-	vector<int*> shifts(bbox.size());
-	for(uint i=0;i<bbox.size();++i){	shifts[i]=new int[4];		}
+	int shifts[4];
 	int shiftx[4]={-1,0,1,0};
 	int shifty[4]={0,-1,0,1};
 	int bounding_sz[4]={1e6,1e6,1e6,1e6};
 
-	for(uint i=0;i<bbox.size();++i){
-		Rect& sz=bbox[i];
-		bounding_sz[0]=min(bounding_sz[0],sz.x);
-		bounding_sz[1]=min(bounding_sz[1],sz.y);
-		bounding_sz[2]=min(bounding_sz[2],frame.cols-(sz.x+sz.width));
-		bounding_sz[3]=min(bounding_sz[3],frame.rows-(sz.y+sz.height));
-	}
+	bounding_sz[0]=min(bounding_sz[0],bbox.x);
+	bounding_sz[1]=min(bounding_sz[1],bbox.y);
+	bounding_sz[2]=min(bounding_sz[2],frame.cols-(bbox.x+bbox.width));
+	bounding_sz[3]=min(bounding_sz[3],frame.rows-(bbox.y+bbox.height));
 
-	for(uint i=0;i<bbox.size();++i){
-		Rect& sz=bbox[i];
-		int _0=(int)(sz.width*sz_overlap);
-		int _1=(int)(sz.height*sz_overlap);
-		shifts[i][0]=min(bounding_sz[0], sz.x);
-		shifts[i][1]=min(bounding_sz[1], sz.y);
-		shifts[i][2]=min(bounding_sz[2],frame.cols-(sz.x+sz.width));
-		shifts[i][3]=min(bounding_sz[3],frame.rows-(sz.y+sz.height));
-		if(shifts[i][0]<sz.width-_0){	shifts[i][0]=0;	}
-		if(shifts[i][1]<sz.height-_1){	shifts[i][1]=0;	}
-		if(shifts[i][2]<sz.width-_0){	shifts[i][2]=0;	}
-		if(shifts[i][3]<sz.height-_1){	shifts[i][3]=0;	}
-	}
+	int _0=(int)(bbox.width*sz_overlap);
+	int _1=(int)(bbox.height*sz_overlap);
+	shifts[0]=bbox.x;
+	shifts[1]=bbox.y;
+	shifts[2]=frame.cols-(bbox.x+bbox.width);
+	shifts[3]=frame.rows-(bbox.y+bbox.height);
+	if(shifts[0]<bbox.width-_0){	shifts[0]=0;	}
+	if(shifts[1]<bbox.height-_1){	shifts[1]=0;	}
+	if(shifts[2]<bbox.width-_0){	shifts[2]=0;	}
+	if(shifts[3]<bbox.height-_1){	shifts[3]=0;	}
+
 	int index=0;
 	while(neg_cnt<neg_crop){
-		index=index%(bbox.size());
-		Rect& sz=bbox[index];
+		Rect& sz=bbox;
 		int _0=(int)(sz.width*sz_overlap);
 		int _1=(int)(sz.height*sz_overlap);
-		int pad[4]={shifts[index][0],shifts[index][1],shifts[index][2],shifts[index][3]};
 		int min_shift[4]={sz.width-_0,sz.height-_1, sz.width-_0,sz.height-_1};
 
 		for(int k=0;k<4;++k){
-			if(pad[k]==0){	continue;	}
-			int deltax=shiftx[k]*(rand()%(pad[k]-min_shift[k]+1)+min_shift[k]);
-			int deltay=shifty[k]*(rand()%(pad[k]-min_shift[k]+1)+min_shift[k]);
+			if(shifts[k]==0){	continue;	}
+			int deltax=shiftx[k]*(rand()%(shifts[k]-min_shift[k]+1)+min_shift[k]);
+			int deltay=shifty[k]*(rand()%(shifts[k]-min_shift[k]+1)+min_shift[k]);
 			if(deltax==0){
-				if(pad[0]>0 and pad[2]>0){
-					deltax=rand()%(pad[2]+pad[0])-pad[0];
+				if(shifts[0]>0 and shifts[2]>0){
+					deltax=rand()%(shifts[2]+shifts[0])-shifts[0];
 				}
 			}
 			if(deltay==0){
-				if(pad[1]>0 and pad[3]>0){
-					deltay=rand()%(pad[3]+pad[1])-pad[1];
+				if(shifts[1]>0 and shifts[3]>0){
+					deltay=rand()%(shifts[3]+shifts[1])-shifts[1];
 				}
 			}
 			Rect _sz;
@@ -148,41 +140,38 @@ void createNegativeSamples(Mat& frame, vector<Rect>& bbox, vector<Rect>& neg_roi
 		}
 		++index;
 	}
-	for(uint i=0;i<bbox.size();++i){	delete shifts[i];	}
 }
 
-void getSamplesFromFrame(Mat& frame, vector<HogParam>& params, vector<Rect>& bbox, Mat& sampleMat, Mat& labelMat){
+void getSamplesFromFrame(Mat& frame, vector<HogParam>& params, Rect& bbox, Mat& sampleMat, Mat& labelMat){
+	int pos_crop=POS_CROP;
 	int neg_crop=NEG_CROP;	//total
-	int pad_len=10;
-	float pad_ratio=0.125;
-	float crop_ratio=0.9;
+
 	float sz_overlap=0.2;
 	Size fixed_size=params[0].winSize;
 	vector<float> msHogFeat;
 	vector<Rect> crop_boxes;
 
-	for(uint i=0;i<bbox.size();++i){
-		Rect& sz=bbox[i];
-		Rect padded_gt=Rect(max(0,sz.x-max(pad_len, (int)(sz.width*pad_ratio))), max(0,sz.y-max(pad_len, (int)(sz.height*pad_ratio))),\
-				sz.width+2*max(pad_len, (int)(sz.width*pad_ratio)), sz.height+2*max(pad_len,(int)(sz.height*pad_ratio)));
-		padded_gt.width=min(padded_gt.width, frame.cols-padded_gt.x);
-		padded_gt.height=min(padded_gt.height, frame.rows-padded_gt.y);
-		crop_boxes.push_back(bbox[i]);
-		crop_boxes.push_back(padded_gt);
-		Rect lt(padded_gt.x,padded_gt.y,(int)(padded_gt.width*crop_ratio),(int)(padded_gt.height*crop_ratio));
-		Rect lb(padded_gt.x,padded_gt.y+(int)((1-crop_ratio)*padded_gt.height),(int)(padded_gt.width*crop_ratio),(int)(padded_gt.height*crop_ratio));
-		Rect rt(padded_gt.x+(int)((1-crop_ratio)*padded_gt.width),padded_gt.y,(int)(padded_gt.width*crop_ratio),(int)(padded_gt.height*crop_ratio));
-		Rect rb(padded_gt.x+(int)((1-crop_ratio)*padded_gt.width),padded_gt.y+(int)((1-crop_ratio)*padded_gt.height),(int)(padded_gt.width*crop_ratio),(int)(padded_gt.height*crop_ratio));
-		crop_boxes.push_back(lt);crop_boxes.push_back(lb);
-		crop_boxes.push_back(rt);crop_boxes.push_back(rb);
+	//cout<<params[0].winSize.width<<","<<params[0].winSize.height<<endl;
+	Rect rc;
+	float start=1.0, mult=1.05;
+	for(int k=0;k<pos_crop;++k){
+		rc.width=bbox.width*start;
+		rc.height=bbox.height*start;
+		rc.x=max(0, (int)(bbox.x-0.5*(rc.width-bbox.width)));
+		rc.y=max(0, (int)(bbox.y-0.5*(rc.height-bbox.height)));
+		rc.width=min(frame.cols-rc.x, rc.width);
+		rc.height=min(frame.rows-rc.y, rc.height);
+		crop_boxes.push_back(rc);
+		start*=mult;
 	}
+
 	for(uint i=0;i<crop_boxes.size();++i){
 		Mat roi=frame(crop_boxes[i]);
 		for(int k=-1;k<2;++k){
 			Mat flipped;
-			roi.copyTo(flipped);
+			//roi.copyTo(flipped);
 			if(k>=0){	flip(roi,flipped,k);	}
-			resize(flipped,flipped,fixed_size);
+			else{	flipped=roi;	}
 			getMSHogFeature(flipped, params, msHogFeat);
 			if(sampleMat.empty()){	sampleMat.create(Size(msHogFeat.size(), 3*crop_boxes.size()+neg_crop), CV_32FC1);	}
 			if(labelMat.empty()){	labelMat.create(Size(1,3*crop_boxes.size()+neg_crop), CV_32FC1);	}
@@ -199,7 +188,10 @@ void getSamplesFromFrame(Mat& frame, vector<HogParam>& params, vector<Rect>& bbo
 	//cout<<"creating negative samples"<<endl;
 	int offset=3*crop_boxes.size();
 	vector<Rect>().swap(crop_boxes);
+
 	createNegativeSamples(frame, bbox, crop_boxes, sz_overlap);
+
+	Mat neg;
 	for(uint i=0;i<crop_boxes.size();++i){
 		Mat roi=frame(crop_boxes[i]);
 		getMSHogFeature(roi, params, msHogFeat);

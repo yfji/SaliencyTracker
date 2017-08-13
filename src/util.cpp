@@ -108,5 +108,36 @@ void printParams(vector<HogParam>& params){
 	}
 }
 
+void padROI(Rect& roi, const Size& bounding, float alpha){
+	int max_size=max(roi.width,roi.height);
+	max_size*=alpha;
+	roi.x=int(roi.x-(max_size-roi.width)*0.5);
+	roi.y=int(roi.y-(max_size-roi.height)*0.5);
+	roi.x=max(0,roi.x);
+	roi.y=max(0,roi.y);
+	roi.width=min(bounding.width-roi.x, max_size);
+	roi.height=min(bounding.height-roi.y, max_size);
+}
 
+Size optionSizes[3]={
+		Size(192,64),
+		Size(64,64),
+		Size(64,192)
+};
 
+void alignSize(const Size& bbox, Size& size){
+	float w=1.0*bbox.width;
+	float h=1.0*bbox.height;
+	if(w/h>1.5){
+		size.width=optionSizes[0].width;
+		size.height=optionSizes[0].height;
+	}
+	else if(h/w>1.5){
+		size.width=optionSizes[2].width;
+		size.height=optionSizes[2].height;
+	}
+	else{
+		size.width=optionSizes[1].width;
+		size.height=optionSizes[1].height;
+	}
+}
