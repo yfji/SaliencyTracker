@@ -147,13 +147,12 @@ void getSamplesFromFrame(Mat& frame, vector<HogParam>& params, Rect& bbox, Mat& 
 	int neg_crop=NEG_CROP;	//total
 
 	float sz_overlap=0.2;
-	Size fixed_size=params[0].winSize;
 	vector<float> msHogFeat;
 	vector<Rect> crop_boxes;
 
 	//cout<<params[0].winSize.width<<","<<params[0].winSize.height<<endl;
 	Rect rc;
-	float start=1.0, mult=1.05;
+	float start=1.0, mult=1.1;
 	for(int k=0;k<pos_crop;++k){
 		rc.width=bbox.width*start;
 		rc.height=bbox.height*start;
@@ -202,6 +201,33 @@ void getSamplesFromFrame(Mat& frame, vector<HogParam>& params, Rect& bbox, Mat& 
 		}
 		labelPtr[0]=-1.0;
 		vector<float>().swap(msHogFeat);
+	}
+}
+
+void getAllSamples(vector<string>& file_names, vector<Rect>& rois, vector<HogParam>& params, Mat& sampleMat, Mat& labelMat, int n){
+	vector<float> msHogFeat;
+	int featLen=0;
+	int samplesPerFrame=3*POS_CROP+NEG_CROP;
+	int N=file_names.size()/n;
+	for(uint k=0;k<params.size();++k){
+		HogParam& param=params[k];
+		int len=((param.winSize.width-param.blockSize)/param.stride+1)*((param.winSize.height-param.blockSize)/param.stride+1)*36;
+		featLen+=len;
+	}
+	if(sampleMat.empty()){
+		sampleMat.create(Size(featLen, samplesPerFrame*N), CV_32FC1);
+	}
+	if(labelMat.empty()){
+		labelMat.create(Size(1, samplesPerFrame*N), CV_32FC1);
+	}
+	int base=0;
+	for(int k=0;k<N;++k){
+		Mat frame=imread(file_names[k]);
+		Mat _sampleMat=sampleMat(Rect(0,base,featLen,samplesPerFrame));
+		Mat _labelMat=labelMat(Rect(0,base,1,samplesPerFrame));
+
+		getSamplesFromFrame(frame, params, rois[k], _sampleMat, _labelMat);
+		base+=samplesPerFrame;
 	}
 }
 

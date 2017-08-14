@@ -19,7 +19,75 @@ void draw_bbox(Mat& frame, vector<Target>& targets, int width){
 		rectangle(frame, targets[i].location, s, width);
 }
 
-void detect_bbox(const Mat& src, vector<Target>& targets, MySVM& classifier, const Size& offset, bool bCurFrame){
+bool detect_bbox_simple(const Mat& src, Target& target, MySVM& classifier, const Point& offset){
+	Mat scaled;
+	int scale=2;
+	resize(src, scaled, Size(src.cols/scale, src.rows/scale));
+	scaled=detectSaliency(scaled);
+
+	imshow("sa", scaled);
+	IplImage ipl=scaled;
+	CvMemStorage* pStorage=cvCreateMemStorage(0);
+	CvSeq* pContour=NULL;
+	extern float max_area;
+	extern float min_area;
+	extern vector<HogParam> params;
+
+	max_area=0.5*src.cols*src.rows;
+	min_area=25.0;
+
+	Rect lastLocation=target.location;
+
+	lastLocation.x-=offset.x;
+	lastLocation.y-=offset.y;
+
+	max_area=min(max_area, (float)2.0*lastLocation.height*lastLocation.width);
+	min_area=max(min_area, (float)0.5*lastLocation.height*lastLocation.width);
+
+	float r=1.0*lastLocation.width/(1.0*lastLocation.height);
+
+	float ratio[2]={r*0.5,r*2};	//w/h
+
+	cvFindContours(&ipl, pStorage, &pContour, sizeof(CvContour), CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+
+	bool updated=false;
+	for(;pContour;pContour=pContour->h_next){
+/*
+		double area=fabs(cvContourArea(pContour))*scale*scale;
+		if(area>max_area or area<min_area){
+			cvSeqRemove(pContour,0);
+			continue;
+		}
+*/
+		CvRect bbox=cvBoundingRect(pContour,0);
+		Rect raw_bbox=Rect(bbox.x*scale, bbox.y*scale, bbox.width*scale, bbox.height*scale);
+
+		double bw=1.0*raw_bbox.width;
+		double bh=1.0*raw_bbox.height;
+		if(bw/bh<ratio[0] or bw/bh>ratio[1]){
+			cvSeqRemove(pContour,0);
+			continue;
+		}
+
+		Mat roi=src(raw_bbox);
+		int res=detectSVM(roi, params, classifier);
+		if(res==-1){
+			cvSeqRemove(pContour,0);
+			continue;
+		}
+		raw_bbox.x+=offset.x;
+		raw_bbox.y+=offset.y;
+		target.location=raw_bbox;
+		updated=true;
+	}
+	if(not updated){
+
+		//updated=true;
+	}
+	return updated;
+}
+
+void detect_bbox(const Mat& src, vector<Target>& targets, MySVM& classifier, const Point& offset, bool bCurFrame){
 	//one frame
 	Mat scaled;
 	int scale=2;
@@ -101,8 +169,8 @@ void detect_bbox(const Mat& src, vector<Target>& targets, MySVM& classifier, con
 				iter=targets.erase(iter);
 			}
 			else{
-				(*iter).location.x=offset.width;
-				(*iter).location.y+=offset.height;
+				(*iter).location.x=offset.x;
+				(*iter).location.y+=offset.y;
 				++iter;
 			}
 		}

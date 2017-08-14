@@ -11,8 +11,8 @@
 #include <time.h>
 
 
-double max_area;
-double min_area;
+float max_area;
+float min_area;
 vector<HogParam> params;
 
 string datasets[]={

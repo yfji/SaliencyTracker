@@ -27,8 +27,8 @@
 #include "util.h"
 #include <stdlib.h>
 
-#define POS_CROP	10
-#define NEG_CROP	30
+#define POS_CROP	2
+#define NEG_CROP	6
 
 typedef unsigned int uint;
 typedef SVM MySVM;
@@ -48,6 +48,8 @@ int detectSVM(Mat& src, vector<HogParam>& params, MySVM& svm);
 void createNegativeSamples(Mat& frame, Rect& bbox, vector<Rect>& neg_rois, float overlap=0.1);
 
 void getSamplesFromFrame(Mat& frame, vector<HogParam>& params, Rect& bbox, Mat& sampleMat, Mat& labelMat);
+
+void getAllSamples(vector<string>& file_names, vector<Rect>& rois, vector<HogParam>& params, Mat& sampleMat, Mat& labelMat, int n=2);
 
 void trainOrUpdateSVM(MySVM& svm, Mat& sampleMat, Mat& labelMat, vector<HogParam>& params, int iter=5e2);
 
