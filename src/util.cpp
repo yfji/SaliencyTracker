@@ -128,11 +128,11 @@ Size optionSizes[3]={
 void alignSize(const Size& bbox, Size& size){
 	float w=1.0*bbox.width;
 	float h=1.0*bbox.height;
-	if(w/h>1.5){
+	if(w/h>2){
 		size.width=optionSizes[0].width;
 		size.height=optionSizes[0].height;
 	}
-	else if(h/w>1.5){
+	else if(h/w>2){
 		size.width=optionSizes[2].width;
 		size.height=optionSizes[2].height;
 	}
@@ -140,4 +140,15 @@ void alignSize(const Size& bbox, Size& size){
 		size.width=optionSizes[1].width;
 		size.height=optionSizes[1].height;
 	}
+	cout<<size.width<<","<<size.height<<endl;
+}
+
+void saveOPE(string& ope_file, vector<Rect>& run_rects){
+	ofstream ope;
+	ope.open(ope_file.c_str(), ios::out);
+	for(int i=0;i<run_rects.size();++i){
+		Rect& rect=run_rects[i];
+		ope<<rect.x<<' '<<rect.y<<' '<<rect.width<<' '<<rect.height<<'\n';
+	}
+	ope.close();
 }

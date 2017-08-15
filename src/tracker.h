@@ -14,7 +14,7 @@
 
 void showFrame(string file_list, string gt_file);
 
-void runTrackerSimple(string file_list, string gt_file);
+void runTrackerSimple(string file_list, string gt_file, string ope_file);
 
 void runTracker(string file_list, string gt_file, bool bOneFrameLag=true);
 

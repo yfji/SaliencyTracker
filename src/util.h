@@ -35,4 +35,5 @@ void padROI(Rect& roi, const Size& bounding, float alpha=1.15);
 
 void alignSize(const Size& bbox, Size& size);
 
+void saveOPE(string& ope_file, vector<Rect>& run_rects);
 #endif /* SRC_UTIL_H_ */

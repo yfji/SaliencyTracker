@@ -8,6 +8,8 @@
 
 #include "tracker.h"
 #define FILTER_LEN 2*LIFE
+#define _PRETRAIN
+//#define MS
 
 Size initTargetSize;
 
@@ -47,10 +49,11 @@ void showFrame(string file_list, string gt_file){
 	}
 }
 
-void runTrackerSimple(string file_list, string gt_file){
+void runTrackerSimple(string file_list, string gt_file, string ope_file){
 	vector<Rect> rois;
 	vector<string> file_names;
 
+	vector<Rect> run_rects;
 	readGroundTruth(gt_file, rois);
 	readFileName(file_list, file_names);
 
@@ -73,13 +76,18 @@ void runTrackerSimple(string file_list, string gt_file){
 
 	Rect bbox, s_roi;
 
-#ifndef _PRETRAIN
-	Mat sampleMat, labelMat;
+	float _scale=1.5;
+	float _max_scale=2.25;
+	float scale=_scale;
 
 	for(uint j=0;j<params.size();++j){
 		alignSize(Size(rois[0].width, rois[0].height), params[j].winSize);
 	}
-	getAllSamples(file_names, rois, params, sampleMat, labelMat);
+
+#ifdef _PRETRAIN
+	Mat sampleMat, labelMat;
+
+	getAllSamples(file_names, rois, params, sampleMat, labelMat, 1);
 
 	cout<<"data size: "<<sampleMat.cols<<","<<sampleMat.rows<<endl;
 	cout<<"training..."<<endl;
@@ -89,7 +97,7 @@ void runTrackerSimple(string file_list, string gt_file){
 	cout<<"tracking..."<<endl;
 
 	for(uint k=0;k<file_names.size();++k){
-#ifdef _PRETRAIN
+#ifndef _PRETRAIN
 		Mat sampleMat, labelMat;
 #endif
 		frame=imread(file_names[k]);
@@ -99,37 +107,45 @@ void runTrackerSimple(string file_list, string gt_file){
 		}
 		else if(detected){
 			cout<<"Target detected"<<endl;
+			scale=_scale;
 			bbox=curTarget.location;
 		}
-#ifdef _PRETRAIN
-		for(uint j=0;j<params.size();++j){
-			alignSize(Size(bbox.width, bbox.height), params[j].winSize);
+		else{
+			scale+=0.1;
+			if(scale>=_max_scale){	scale=_scale;	}
 		}
+#ifndef _PRETRAIN
 
 		if(k==0){
 			getSamplesFromFrame(frame, params, bbox, sampleMat, labelMat);
-			trainOrUpdateSVM(svm, sampleMat, labelMat, params);
+			trainOrUpdateSVM(svm, sampleMat, labelMat, params, 5e2);
 		}
 #endif
 
 		blur(frame,frame,Size(ksize,ksize));
 		Mat dummy;
 		frame.copyTo(dummy);
+#ifdef MS
+		Point offset;
+		Mat sa=multiScaleSaliency(frame, bbox, Size(frame.cols, frame.rows), offset);
+		imshow("sa", sa);
+		detect_bbox_contour(sa, curTarget, offset);
+#endif
 
+#ifndef MS
 		s_roi=bbox;
-
-		padROI(s_roi, Size(frame.cols, frame.rows));
-
+		padROI(s_roi, Size(frame.cols, frame.rows), scale);
 		detected=detect_bbox_simple(frame(s_roi), curTarget, svm, Point(s_roi.x,s_roi.y));
-
+#endif
 		targets[0].location=curTarget.location;
+		run_rects.push_back(curTarget.location);
 		draw_bbox(dummy, targets, 1);
 		//rectangle(dummy,s_roi,Scalar(0,255,255),1);
 		imshow("frame", dummy);
 		key=waitKey(10);
 		if(key==27){	break;	}
 	}
-
+	//saveOPE(ope_file, run_rects);
 }
 
 void runTracker(string file_list, string gt_file, bool bOneFrameLag){

@@ -36,6 +36,8 @@ void detect_bbox(const Mat& src, vector<Target>& targets, MySVM& classifier, con
 
 bool detect_bbox_simple(const Mat& src, Target& target, MySVM& classifier, const Point& offset);
 
+bool detect_bbox_contour(const Mat& sa, Target& target, Point& offset);
+
 void detect_bbox_kcf(Mat& src, vector<Target>& targets);
 
 bool is_new_target(Target& t, vector<Target>& targets, int& index);

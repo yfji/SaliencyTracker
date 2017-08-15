@@ -53,4 +53,8 @@ void getAllSamples(vector<string>& file_names, vector<Rect>& rois, vector<HogPar
 
 void trainOrUpdateSVM(MySVM& svm, Mat& sampleMat, Mat& labelMat, vector<HogParam>& params, int iter=5e2);
 
+void erodeAndDilate(Mat& src, int dim);
+
+Mat multiScaleSaliency(Mat& src, const Rect& bbox, const Size& bounding, Point& offset);
+
 #endif /* SRC_FEATURES_H_ */

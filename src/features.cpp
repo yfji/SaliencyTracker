@@ -152,7 +152,9 @@ void getSamplesFromFrame(Mat& frame, vector<HogParam>& params, Rect& bbox, Mat& 
 
 	//cout<<params[0].winSize.width<<","<<params[0].winSize.height<<endl;
 	Rect rc;
-	float start=1.0, mult=1.1;
+	float start=1.0, mult;
+	if(pos_crop>=4){	mult=1.05;	}
+	else{	mult=1.1;	}
 	for(int k=0;k<pos_crop;++k){
 		rc.width=bbox.width*start;
 		rc.height=bbox.height*start;
@@ -255,4 +257,48 @@ void trainOrUpdateSVM(MySVM& svm, Mat& sampleMat, Mat& labelMat, vector<HogParam
 	param.kernel_type = SVM::LINEAR;
 	param.term_crit=tc;
 	svm.train(sampleMat, labelMat, Mat(), Mat(), param);//train
+}
+
+void erodeAndDilate(Mat& src, int dim){
+	int g_nStructElementSize = dim;
+	Mat element = getStructuringElement(MORPH_RECT,
+			Size(2*g_nStructElementSize+1,2*g_nStructElementSize+1),
+			Point( g_nStructElementSize, g_nStructElementSize ));
+
+	//dilate black pixels, erode white pixels
+	dilate(src, src, element);
+	erode(src, src, element);
+}
+
+Mat multiScaleSaliency(Mat& src, const Rect& bbox, const Size& bounding, Point& offset){
+	float max_scale=2;
+	float num_scale=4;
+	float res=max_scale/num_scale;
+	float scale=max_scale;
+
+	Mat roi, sa, canvas;
+	Rect max_roi;
+	bool bMax;
+	Rect r;
+	for(;scale>=1;scale-=res){
+		r=bbox;
+		padROI(r, bounding, scale);
+		if(bMax){
+			bMax=false;
+			max_roi=r;
+			canvas=Mat::zeros(Size(max_roi.width, max_roi.height), CV_8UC1);
+			offset.x=max_roi.x;
+			offset.y=max_roi.y;
+		}
+		sa=Mat::zeros(Size(max_roi.width, max_roi.height), CV_8UC1);
+		src(r).copyTo(roi);
+		r.x-=max_roi.x;
+		r.y-=max_roi.y;
+		roi=detectSaliency(roi);
+		roi.copyTo(sa(r));
+		bitwise_or(canvas, sa, canvas);
+	}
+	sa(r).setTo(255);
+	bitwise_and(canvas, sa, canvas);
+	return canvas;
 }
