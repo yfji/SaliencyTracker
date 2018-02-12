@@ -37,6 +37,7 @@ cv::Rect MyTracker::update(cv::Mat & image)
 
 void MyTracker::recycle()
 {
+	std::cout << "tracker " << trackerId << " recycled" << std::endl;
 	state = sleeping;
 	puzzleFrames = 0;
 	pTarget->life = 0;
@@ -44,7 +45,8 @@ void MyTracker::recycle()
 
 void MyTracker::forceUpdate()
 {
+	std::cout << "tracker " << trackerId << " force-updated" << std::endl;
 	state = puzzled;
-	puzzleFrames = 0;
+	// puzzleFrames = 0;
 	update_by_detect = true;
 }

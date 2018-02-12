@@ -66,7 +66,7 @@ void testKCF() {
 	KCFTracker kcfTracker;
 	int scale = 1;
 	int frameIndex = 0;
-	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence02_files.txt");
+	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence03_files.txt");
 	cv::Rect2d roi;
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
@@ -91,15 +91,16 @@ void testKCF() {
 void testTracker() {
 	int scale = 2;
 	Tracker tracker;
-	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence02_files.txt");
+	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence03_files.txt");
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
 		cv::Mat scaled;
 		cv::resize(image, scaled, cv::Size(image.cols / scale, image.rows / scale));
 		tracker.detect_filter(scaled);
 		tracker.track(scaled);
+		tracker.nms();
 		tracker.drawBoundingBox(image, scale);
 		cv::imshow("frame", image);
-		cv::waitKey(1);
+		cv::waitKey();
 	}
 }

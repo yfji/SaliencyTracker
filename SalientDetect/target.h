@@ -22,7 +22,7 @@ struct target {
 		directy(0),
 		uuid(0),
 		life(1),
-		dist(1e5),
+		dist(1e4),
 		score(0.0),
 		prev(nullptr) {}
 };

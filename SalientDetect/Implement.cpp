@@ -1,9 +1,12 @@
 #include "stdafx.h"
 #include "Implement.h"
 
+#define PATCH_DETECT	1
 
 Implement::Implement()
 {
+	kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+	patchKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
 }
 
 
@@ -24,8 +27,6 @@ cv::Mat Implement::getPatch(cv::Mat& im, cv::Rect& rect) {
 std::vector<cv::Rect> Implement::parseCandidatePatches(cv::Mat& im) {
 	cv::Mat baseSalMap = salient.salientDetectFT(im);
 	cv::Mat baseBiMap = salient.adaptBinarize(baseSalMap);
-	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
-	cv::Mat patchKernel= cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
 	cv::erode(baseBiMap, baseBiMap, kernel);
 	std::vector<cv::Rect> boxes = salient.findBoundingBoxes(baseBiMap.clone());
 	std::vector<cv::Rect> finals;
@@ -35,10 +36,10 @@ std::vector<cv::Rect> Implement::parseCandidatePatches(cv::Mat& im) {
 	// cv::waitKey();
 	for (auto i = 0; i < boxes.size(); ++i) {
 		cv::Rect _box = boxes[i];
+#if PATCH_DETECT==1
 		cv::Mat patch = getPatch(im, boxes[i]);
 		if (patch.rows < 10 || patch.cols < 10)
 			continue;
-		// cv::Mat biMap = salient.salientDetectFTFull(patch);
 		cv::Mat biMap = salient.salientDetectFT(patch);
 		biMap = salient.adaptBinarize(biMap);
 		// cv::erode(biMap, biMap, patchKernel);
@@ -48,10 +49,7 @@ std::vector<cv::Rect> Implement::parseCandidatePatches(cv::Mat& im) {
 			continue;
 		}
 		cv::Rect nearBox;
-		cv::Point patchCenter;
-		patchCenter.x = patch.cols / 2;
-		patchCenter.y = patch.rows / 2;
-		// std::cout << patchCenter.x << "," << patchCenter.y << std::endl;
+		cv::Point patchCenter{ patch.cols / 2,patch.rows / 2 };
 		int distCenter = 1e5;
 		bool ok = false;
 		for (auto j = 0; j < patchBoxes.size(); ++j) {
@@ -66,8 +64,15 @@ std::vector<cv::Rect> Implement::parseCandidatePatches(cv::Mat& im) {
 				ok = true;
 			}
 		}
-		if(ok)
-			finals.push_back(nearBox);
+		if (ok) {
+			std::vector<cv::Rect> res = { _box, nearBox };
+			nms(res);
+			finals.push_back(res[0]);
+			//finals.push_back(nearBox);
+		}
+#else
+		finals.push_back(_box);
+#endif
 	}
 	nms(finals);
 	return finals;
@@ -116,12 +121,15 @@ void Implement::nms(std::vector<cv::Rect>& boxes) {
 			auto t_rate = 1.0*overlap / t_area;
 			auto q_rate = 1.0*overlap / q_area;
 			if (t_rate > 0.25) {
-				if (t_area <= q_area)
+				if (t_area <= q_area) {
 					toDelete[i] = true;
+				}
 			}
 			if (q_rate > 0.25) {
-				if (q_area < t_area && toDelete[i]==false)
+				if (q_area < t_area && toDelete[i]==false){
 					toDelete[j] = true;
+					//std::cout << "box " << i << " nms" << std::endl;
+				}
 			}
 		}
 	}

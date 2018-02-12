@@ -199,12 +199,12 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 
 	bool updated = false;
 	max_area = 1e4;
-	min_area =900;
+	min_area = 200;
 	for (; pContour; pContour = pContour->h_next) {
 		float true_area = fabs(cvContourArea(pContour));
 		cv::Rect bbox = cvBoundingRect(pContour, 0);
 		float box_area = bbox.height*bbox.width;
-		if (bbox.width > 2.5*bbox.height || bbox.height > 2.5*bbox.width) {
+		if (bbox.width > 2*bbox.height || bbox.height > 2.5*bbox.width) {
 			cvSeqRemove(pContour, 0);
 			continue;
 		}
