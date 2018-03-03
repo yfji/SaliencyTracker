@@ -124,7 +124,7 @@ void Tracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
 {
 	t->update(*im, psr_thres);
 	float psr = t->calcPSR();
-	std::cout << "tracker " << t->trackerId << " psr: " << psr << std::endl;
+	//std::cout << "tracker " << t->trackerId << " psr: " << psr << std::endl;
 	if (psr < psr_thres) {
 		t->puzzleFrames++;
 		t->update_by_detect = true;
@@ -176,8 +176,8 @@ void Tracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 			cv::Rect roi(t.pTarget->x*scale, t.pTarget->y*scale, t.pTarget->width*scale, t.pTarget->height*scale);
 			cv::rectangle(curFrame, roi, colors[t.trackerId], 2);
 			std::stringstream ss;
-			ss << "tracker " << i;
-			cv::putText(curFrame, ss.str(), cv::Point(roi.x - 10, roi.y), cv::FONT_HERSHEY_PLAIN, 0.9, colors[t.trackerId]);
+			ss << "tracker " << i<<" : "<<t.psr;
+			cv::putText(curFrame, ss.str(), cv::Point(roi.x - 15, roi.y), cv::FONT_HERSHEY_PLAIN, 0.9, colors[t.trackerId]);
 		}
 	}
 	else {
@@ -223,13 +223,14 @@ void Tracker::nms()
 			auto overlap = max(0, rx - lx)*max(0, ry - ly);
 			auto t_rate = 1.0*overlap / t_area;
 			auto q_rate = 1.0*overlap / q_area;
-			if (t_rate > 0.25) {
-				if (t_area <= q_area) {
+			float nms_thres = 0.16;
+			if (t_rate > nms_thres) {
+				if (t_area <= q_area && t_target->life<=q_target->life) {
 					toDelete[i] = true;
 				}
 			}
-			if (q_rate > 0.25) {
-				if (q_area < t_area && toDelete[i] == false) {
+			if (q_rate > nms_thres) {
+				if (q_area < t_area && toDelete[i] == false && q_target->life<=t_target->life) {
 					toDelete[j] = true;
 				}
 			}

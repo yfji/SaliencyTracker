@@ -6,6 +6,7 @@ MyTracker::MyTracker()
 {
 	state = sleeping;
 	puzzleFrames = 0;
+	life = 0;
 }
 
 
@@ -37,6 +38,7 @@ cv::Rect MyTracker::update(cv::Mat & image, float thres)
 	pTarget->width = res.width;
 	pTarget->height = res.height;
 	pTarget->b_new = false;
+	++life;
 	return res;
 }
 
@@ -46,6 +48,7 @@ void MyTracker::recycle()
 	state = sleeping;
 	puzzleFrames = 0;
 	pTarget->life = 0;
+	life = 0;
 }
 
 void MyTracker::forceUpdate()

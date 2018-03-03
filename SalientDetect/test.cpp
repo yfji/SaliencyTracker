@@ -78,7 +78,7 @@ void testKCF() {
 	KCFTracker kcfTracker;
 	int scale = 1;
 	int frameIndex = 0;
-	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/person5_files.txt");
+	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/car6_files.txt");
 	cv::Rect2d roi;
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
@@ -103,15 +103,17 @@ void testKCF() {
 void testTracker() {
 	int scale = 2;
 	Tracker tracker;
-	std::string path = "I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/person5_files.txt";
+	std::string path = "I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/car6_files.txt";
 	std::vector<std::string> file_paths = loadPathFromFile(path.c_str());
 	int cnt = 0;
 	auto start = std::chrono::high_resolution_clock::now();
 	char key = 0;
+	int frameIndex = 0;
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
 		cv::Mat scaled;
 		cv::resize(image, scaled, cv::Size(image.cols / scale, image.rows / scale));
+		//if(frameIndex==0)
 		tracker.detect_filter(scaled);
 		tracker.track(scaled);
 		tracker.nms();
@@ -127,5 +129,6 @@ void testTracker() {
 		key=cv::waitKey(1);
 		if (key == 27)
 			break;
+		++frameIndex;
 	}
 }

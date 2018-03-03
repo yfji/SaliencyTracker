@@ -16,13 +16,16 @@ public:
 	void forceUpdate();
 	inline float calcPSR() {
 		mTracker.psr=mTracker.peak_value/mTracker.sigma;
-		return mTracker.psr;
+		psr = mTracker.psr;
+		return psr;
 	}
 public:
 	States state;
 	int trackerId;
 	int targetId;
 	int puzzleFrames;
+	int life;
+	float psr;
 	bool allow_train{ true };
 	bool update_by_detect{ false };
 	std::shared_ptr<target> pTarget;
