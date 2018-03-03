@@ -100,8 +100,10 @@ public:
     // Update position based on the new frame
     virtual cv::Rect update(cv::Mat& image);
     float interp_factor; // linear interpolation factor for adaptation
+	float base_lr;
     float sigma; // gaussian kernel bandwidth
 	float peak_value;
+	float psr;
     float lambda; // regularization
     int cell_size; // HOG cell size
     int cell_sizeQ; // cell size^2, to avoid repeated operations

@@ -1,10 +1,22 @@
 #include "stdafx.h"
 #include "test.h"
+#include <chrono>
 
-void testDetector(cv::Mat& image) {
+void testDetector() {
+	cv::Mat image = cv::imread("I:/Experiment/dataset/pafiss_eval_dataset/sequence04/2043_000001.jpeg");
 	Salient salient;
-	cv::Mat salMap = salient.salientDetectFTFull(image);
-	cv::Mat biMap = salient.binarize(salMap);
+	auto start = std::chrono::high_resolution_clock::now();
+	cv::Mat salMap = salient.salientDetectFT(image);
+	cv::Mat biMap = salient.adaptBinarize(salMap);
+	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1));
+
+	cv::erode(biMap, biMap, kernel);
+	cv::imshow("bi", biMap);
+	auto now = std::chrono::high_resolution_clock::now();
+	double duration_ns = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now - start).count();
+	double seconds = duration_ns / 1e9;
+	double fps = 1.0 / seconds;
+	std::cout << "time: " << seconds << std::endl;
 	cv::Mat biMapNot;
 	cv::bitwise_not(biMap, biMapNot);
 	std::vector<cv::Rect> boxes = salient.findBoundingBoxes(biMap.clone());
@@ -66,7 +78,7 @@ void testKCF() {
 	KCFTracker kcfTracker;
 	int scale = 1;
 	int frameIndex = 0;
-	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence03_files.txt");
+	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/person5_files.txt");
 	cv::Rect2d roi;
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
@@ -83,7 +95,7 @@ void testKCF() {
 		float psr = (kcfTracker.peak_value) / (kcfTracker.sigma);
 		std::cout << "psr: " << psr << std::endl;
 		cv::imshow("frame", scaled);
-		cv::waitKey(30);
+		cv::waitKey(5);
 		++frameIndex;
 	}
 }
@@ -91,7 +103,11 @@ void testKCF() {
 void testTracker() {
 	int scale = 2;
 	Tracker tracker;
-	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence03_files.txt");
+	std::string path = "I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/person5_files.txt";
+	std::vector<std::string> file_paths = loadPathFromFile(path.c_str());
+	int cnt = 0;
+	auto start = std::chrono::high_resolution_clock::now();
+	char key = 0;
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
 		cv::Mat scaled;
@@ -100,7 +116,16 @@ void testTracker() {
 		tracker.track(scaled);
 		tracker.nms();
 		tracker.drawBoundingBox(image, scale);
+		auto now = std::chrono::high_resolution_clock::now();
+		double duration_ns = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now - start).count();
+		double seconds = duration_ns / 1e9;
+		double fps = 1.0*(++cnt) / seconds;
+		std::stringstream ss;
+		ss << "fps: " << fps;
+		cv::putText(image, ss.str(), cv::Point(image.cols - 200, 20), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0,255,255),2);
 		cv::imshow("frame", image);
-		cv::waitKey();
+		key=cv::waitKey(1);
+		if (key == 27)
+			break;
 	}
 }

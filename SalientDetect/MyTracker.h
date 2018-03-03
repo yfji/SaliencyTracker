@@ -11,11 +11,12 @@ public:
 	~MyTracker();
 
 	void init(cv::Rect& roi, cv::Mat& image, int tracker_id, int targert_id);
-	cv::Rect update(cv::Mat& image);
+	cv::Rect update(cv::Mat& image, float thres);
 	void recycle();
 	void forceUpdate();
 	inline float calcPSR() {
-		return mTracker.peak_value/mTracker.sigma;
+		mTracker.psr=mTracker.peak_value/mTracker.sigma;
+		return mTracker.psr;
 	}
 public:
 	States state;

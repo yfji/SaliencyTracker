@@ -6,7 +6,7 @@
 #include "kcf\kcftracker.hpp"
 #include "reader.h"
 
-void testDetector(cv::Mat& image);
+void testDetector();
 
 void testVideo();
 

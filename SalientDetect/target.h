@@ -10,6 +10,7 @@ struct target {
 	int uuid;
 	int life;
 	int dist;
+	bool b_new;
 	float score;
 	target* prev;
 
@@ -23,6 +24,7 @@ struct target {
 		uuid(0),
 		life(1),
 		dist(1e4),
+		b_new(true),
 		score(0.0),
 		prev(nullptr) {}
 };

@@ -44,7 +44,7 @@ Implemented by Chris M. Christoudias, Bogdan Georgescu
 
 
 //Include Needed Libraries
-#include <stdafx.h>
+//#include <stdafx.h>
 #include	"ms.h"
 #include	<string.h>
 #include	<stdlib.h>

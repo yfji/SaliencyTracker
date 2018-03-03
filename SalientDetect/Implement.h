@@ -13,7 +13,7 @@ public:
 private:
 	const int block_w = 5;
 	const int block_h = 5;
-	const int window_times = 7;
+	const int window_times = 3;
 	Salient salient;
 	cv::Mat kernel;
 	cv::Mat patchKernel;

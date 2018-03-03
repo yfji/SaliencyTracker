@@ -31,10 +31,9 @@ and they are is available at:
 
 Implemented by Chris M. Christoudias, Bogdan Georgescu
 ********************************************************/
-#include	"stdafx.h"
+// #include	"stdafx.h"
 //include Region Adjacency List class prototype
 #include	"RAList.h"
-
 //include needed libraries
 #include	<stdio.h>
 #include	<assert.h>

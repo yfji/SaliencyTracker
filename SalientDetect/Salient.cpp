@@ -103,11 +103,12 @@ cv::Mat Salient::salientDetectFTFull(cv::Mat& im) {
 	int channels = im.channels();
 	int sz = width*height;
 	cv::Mat baseSalMap = salientDetectFT(im);
+	imshow("base", baseSalMap);
 	cv::Mat rgbSeg;
 	int* pLabels;
 	int numLabels;
 	meansShiftSegmentation(im, rgbSeg, pLabels, numLabels);
-	// imshow("seg", rgbSeg);
+	imshow("seg", rgbSeg);
 	uchar* salMapBuffer = (uchar*)baseSalMap.data;
 	std::vector<float> valPerSeg(numLabels, 0.0);
 	std::vector<int> histPerSeg(numLabels, 0);
@@ -164,6 +165,7 @@ cv::Mat Salient::salientDetectFTFull(cv::Mat& im) {
 			biBuffer[i] = 0;
 	}
 	delete pLabels;
+	imshow("segBi", segBinary);
 	return segBinary;
 }
 
@@ -198,12 +200,12 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 	cvFindContours(&ipl, pStorage, &pContour, sizeof(CvContour), CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
 
 	bool updated = false;
-	max_area = 1e4;
-	min_area = 200;
+	max_area = 4e4;
+	min_area = 100;
 	for (; pContour; pContour = pContour->h_next) {
 		float true_area = fabs(cvContourArea(pContour));
 		cv::Rect bbox = cvBoundingRect(pContour, 0);
-		float box_area = bbox.height*bbox.width;
+		float box_area = 1.0*bbox.height*bbox.width;
 		if (bbox.width > 2*bbox.height || bbox.height > 2.5*bbox.width) {
 			cvSeqRemove(pContour, 0);
 			continue;
@@ -216,10 +218,11 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 			cvSeqRemove(pContour, 0);
 			continue;
 		}
-		if (box_area / true_area > 5.0) {
+		if (box_area / true_area > 4.1) {
 			cvSeqRemove(pContour, 0);
 			continue;
 		}
+		//std::cout << "ratio: " << box_area / true_area << std::endl;
 		boxes.push_back(bbox);
 	}
 	cvReleaseMemStorage(&pStorage);
@@ -228,8 +231,8 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 
 cv::Mat Salient::adaptBinarize(cv::Mat& im) {
 	assert(im.channels() == 1);
-	const int blockSize = 17;
-	const int threshold = 10;
+	const int blockSize = 13;
+	const int threshold = 12;
 	const int sz = blockSize*blockSize;
 	int halfSize = blockSize / 2;
 	cv::Rect roi(halfSize, halfSize, im.cols, im.rows);

@@ -1,12 +1,10 @@
 #include "stdafx.h"
 #include "Implement.h"
 
-#define PATCH_DETECT	1
-
 Implement::Implement()
 {
-	kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
-	patchKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+	kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1));
+	patchKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1));
 }
 
 
@@ -24,10 +22,16 @@ cv::Mat Implement::getPatch(cv::Mat& im, cv::Rect& rect) {
 	return im(roi).clone();
 }
 
+#define PATCH_DETECT	1
+
 std::vector<cv::Rect> Implement::parseCandidatePatches(cv::Mat& im) {
+	Salient& s = salient;
+	auto& _binarize = [&s](cv::Mat& im) {   
+		return s.adaptBinarize(im);
+	};
 	cv::Mat baseSalMap = salient.salientDetectFT(im);
-	cv::Mat baseBiMap = salient.adaptBinarize(baseSalMap);
-	cv::erode(baseBiMap, baseBiMap, kernel);
+	cv::Mat baseBiMap = _binarize(baseSalMap);
+	//cv::erode(baseBiMap, baseBiMap, kernel);
 	std::vector<cv::Rect> boxes = salient.findBoundingBoxes(baseBiMap.clone());
 	std::vector<cv::Rect> finals;
 
@@ -41,8 +45,8 @@ std::vector<cv::Rect> Implement::parseCandidatePatches(cv::Mat& im) {
 		if (patch.rows < 10 || patch.cols < 10)
 			continue;
 		cv::Mat biMap = salient.salientDetectFT(patch);
-		biMap = salient.adaptBinarize(biMap);
-		// cv::erode(biMap, biMap, patchKernel);
+		biMap = _binarize(biMap);
+		//cv::erode(biMap, biMap, patchKernel);
 		std::vector<cv::Rect> patchBoxes= salient.findBoundingBoxes(biMap.clone());
 		if (patchBoxes.size() == 0) {
 			finals.push_back(_box);
@@ -74,7 +78,7 @@ std::vector<cv::Rect> Implement::parseCandidatePatches(cv::Mat& im) {
 		finals.push_back(_box);
 #endif
 	}
-	nms(finals);
+	//nms(finals);
 	return finals;
 }
 

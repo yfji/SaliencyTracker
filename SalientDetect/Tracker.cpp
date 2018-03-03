@@ -68,13 +68,11 @@ void Tracker::detect_filter(cv::Mat & curFrame)
 			MyTracker& tracker = trackers[j];
 			std::shared_ptr<target>& t = tracker.pTarget;
 			// int dist= abs(t_box.x - t->x) + abs(t_box.y - t->y);
-			int dist = (int)sqrt((t_box.x - t->x)*(t_box.x - t->x) + (t_box.y - t->y)*(t_box.y - t->y));
-			//std::cout << dist << std::endl;
-			//std::cout << tracker.state << std::endl;
-			//std::cout << t->dist << std::endl;
-			if (tracker.state != sleeping && dist < max_diff && dist < t->dist) {
+			int dist_left = (int)sqrt((t_box.x - t->x)*(t_box.x - t->x) + (t_box.y - t->y)*(t_box.y - t->y));
+			int dist_right = (int)sqrt((t_box.x + t_box.width - t->x - t->width)*(t_box.x + t_box.width - t->x - t->width) + (t_box.y + t_box.height - t->y - t->height)*(t_box.y + t_box.height - t->y - t->height));
+			if (tracker.state != sleeping && (dist_left < max_diff && dist_right<max_diff)&& max(dist_left,dist_right) < t->dist) {
 				if (tracker.update_by_detect) {
-					updateTarget(t, t_box.x, t_box.y, t_box.width, t_box.height, t_box.x - t->x, t_box.y - t->y, dist);
+					updateTarget(t, t_box.x, t_box.y, t_box.width, t_box.height, t_box.x - t->x, t_box.y - t->y, max(dist_left, dist_right));
 					tracker.init(t_box, curFrame, tracker.trackerId, tracker.targetId);
 				}
 				box_new = false;
@@ -105,6 +103,41 @@ void Tracker::detect_filter(cv::Mat & curFrame)
 	std::cout << "target size: " << targets.size() << "; tracker num: "<<tracker_num << std::endl;
 }
 
+void Tracker::trackThreadRef(MyTracker& t, cv::Mat& im)
+{
+	t.update(im, psr_thres);
+	float psr = t.calcPSR();
+	std::cout << "tracker " << t.trackerId << " psr: " << psr << std::endl;
+	if (psr < psr_thres) {
+		t.puzzleFrames++;
+		t.update_by_detect = true;
+	}
+	if (t.puzzleFrames == nForceUpdate) {
+		t.forceUpdate();
+	}
+	if (t.puzzleFrames == nRecycle) {
+		t.recycle();
+	}
+}
+
+void Tracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
+{
+	t->update(*im, psr_thres);
+	float psr = t->calcPSR();
+	std::cout << "tracker " << t->trackerId << " psr: " << psr << std::endl;
+	if (psr < psr_thres) {
+		t->puzzleFrames++;
+		t->update_by_detect = true;
+	}
+	if (t->puzzleFrames % nForceUpdate==0) {
+		t->forceUpdate();
+	}
+	if (t->puzzleFrames == nRecycle) {
+		t->recycle();
+	}
+}
+
+#define MULTI_THREAD	1
 void Tracker::track(cv::Mat& curFrame) {
 	if (targets.size() == 0)
 		return;
@@ -113,20 +146,19 @@ void Tracker::track(cv::Mat& curFrame) {
 			MyTracker& t = trackers[i];
 			if (t.state == sleeping)
 				continue;
-			t.update(curFrame);
-			float psr = t.calcPSR();
-			std::cout << "tracker " << t.trackerId << " psr: " << psr << std::endl;
-			if (psr < psr_thres) {
-				t.puzzleFrames++;
-				t.update_by_detect = true;
-			}
-			if (t.puzzleFrames == nForceUpdate) {
-				t.forceUpdate();
-			}
-			if (t.puzzleFrames == nRecycle) {
-				t.recycle();
+#if MULTI_THREAD==0
+			trackThreadRef(t, curFrame);
+#else
+			mThreads[i]=std::thread (&Tracker::trackThreadPtr, this, &t, &curFrame);
+#endif
+		}
+#if MULTI_THREAD==1
+		for (auto i = 0; i < tracker_num; ++i) {
+			if (mThreads[i].joinable()) {
+				mThreads[i].join();
 			}
 		}
+#endif
 	}
 	else
 		initTrackers(curFrame);
@@ -142,10 +174,10 @@ void Tracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 			if (t.pTarget->life == 0 || t.state==sleeping)
 				continue;
 			cv::Rect roi(t.pTarget->x*scale, t.pTarget->y*scale, t.pTarget->width*scale, t.pTarget->height*scale);
-			cv::rectangle(curFrame, roi, cv::Scalar(0, 255, 0), 2);
+			cv::rectangle(curFrame, roi, colors[t.trackerId], 2);
 			std::stringstream ss;
 			ss << "tracker " << i;
-			cv::putText(curFrame, ss.str(), cv::Point(roi.x + 10, roi.y + 10), cv::FONT_HERSHEY_PLAIN, 0.8, cv::Scalar(0, 0,255));
+			cv::putText(curFrame, ss.str(), cv::Point(roi.x - 10, roi.y), cv::FONT_HERSHEY_PLAIN, 0.9, colors[t.trackerId]);
 		}
 	}
 	else {
@@ -161,13 +193,13 @@ void Tracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 
 void Tracker::initTrackers(cv::Mat& image)
 {
-	for (auto i = 0; i < targets.size(); ++i) {
+	for (auto i = 0; i < min(targets.size(),MAX_N); ++i) {
 		std::shared_ptr<target> t = targets[i];
 		cv::Rect r(t->x, t->y, t->width, t->height);
 		trackers[i].init(r, image, i, i);
 		trackers[i].pTarget = t;
 	}
-	tracker_num = targets.size();
+	tracker_num = min(targets.size(), MAX_N);
 	std::cout << "init tracker num: " << tracker_num << std::endl;
 }
 
@@ -208,4 +240,9 @@ void Tracker::nms()
 			trackers[i].recycle();
 		}
 	}
+}
+
+void Tracker::detectNms()
+{
+
 }

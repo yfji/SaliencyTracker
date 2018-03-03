@@ -4,14 +4,19 @@
 #include "target.h"
 #include "Implement.h"
 #include <vector>
+#include <thread>
 
-#define MAX_N	10
+#define MAX_N	20
 class Tracker
 {
 public:
 	Tracker();
 	~Tracker();
 
+private:
+	void initTrackers(cv::Mat& image);
+	void trackThreadRef(MyTracker& t, cv::Mat& im);
+	void trackThreadPtr(MyTracker* t, cv::Mat* im);
 public:
 	void addTarget(int x, int y, int w, int h);
 	void updateTarget(std::shared_ptr<target>& t, int x, int y, int w, int h, int directx, int directy, int dist, float score = 0.0, target* prev = nullptr);
@@ -22,20 +27,42 @@ public:
 	void drawBoundingBox(cv::Mat& curFrame, int scale=2);
 
 	void nms();
+	void detectNms();
 
 private:
 	int filter_len;
 	int cur_index;
 	int tracker_num;
-	const int max_diff = 20;
-	const float psr_thres = 0.9;
+	const int max_diff = 30;
+	float psr_thres{ 0.5f };
 	const int nForceUpdate = 6;
-	const int nRecycle = 12;
+	const int nRecycle = 11;
+	float max_psr;
 	Implement impl;
 	std::vector<std::shared_ptr<target>> targets;
 	MyTracker trackers[MAX_N];
-
-private:
-	void initTrackers(cv::Mat& image);
+	std::thread mThreads[MAX_N];
+	const cv::Scalar colors[MAX_N] ={
+		cv::Scalar(0,0,255),
+		cv::Scalar(0,255,255),
+		cv::Scalar(0,255,0),
+		cv::Scalar(255,128,128),
+		cv::Scalar(192,128,255),
+		cv::Scalar(255,255,128),
+		cv::Scalar(128,128,0),
+		cv::Scalar(0,128,128),
+		cv::Scalar(64,128,255),
+		cv::Scalar(192,192,192),
+		cv::Scalar(255,128,0),
+		cv::Scalar(64,128,0),
+		cv::Scalar(64,0,64),
+		cv::Scalar(0,0,128),
+		cv::Scalar(192,128,128),
+		cv::Scalar(255,0,255),
+		cv::Scalar(64,128,128),
+		cv::Scalar(0,128,0),
+		cv::Scalar(0,0,0),
+		cv::Scalar(255,255,255)
+	};
 };
 

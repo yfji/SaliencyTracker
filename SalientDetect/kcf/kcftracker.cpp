@@ -155,6 +155,7 @@ KCFTracker::KCFTracker(bool hog, bool fixed_window, bool multiscale, bool lab)
         template_size = 1;
         scale_step = 1;
     }
+	base_lr = interp_factor;
 }
 
 // Initialize tracker 
@@ -220,6 +221,7 @@ cv::Rect KCFTracker::update(cv::Mat& image)
 
     assert(_roi.width >= 0 && _roi.height >= 0);
     cv::Mat x = getFeatures(image, 0);
+
     train(x, interp_factor);
 
     return _roi;

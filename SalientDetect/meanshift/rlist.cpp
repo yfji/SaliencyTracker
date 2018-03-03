@@ -31,7 +31,7 @@ and they are is available at:
 Implemented by Chris M. Christoudias, Bogdan Georgescu
 ********************************************************/
 
-#include	"stdafx.h"
+//#include	"stdafx.h"
 #include	"rlist.h"
 #include	<stdio.h>
 #include	<stdlib.h>
