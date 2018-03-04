@@ -201,7 +201,7 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 
 	bool updated = false;
 	max_area = 4e4;
-	min_area = 100;
+	min_area = 400;
 	for (; pContour; pContour = pContour->h_next) {
 		float true_area = fabs(cvContourArea(pContour));
 		cv::Rect bbox = cvBoundingRect(pContour, 0);

@@ -6,7 +6,7 @@ Tracker::Tracker()
 {
 	tracker_num = 0;
 	target_num = 0;
-	tracker_id = 0;
+	tracker_id = -1;
 }
 
 
@@ -246,15 +246,30 @@ void Tracker::nms()
 			auto overlap = max(0, rx - lx)*max(0, ry - ly);
 			auto t_rate = 1.0*overlap / t_area;
 			auto q_rate = 1.0*overlap / q_area;
-			float nms_thres = 0.5;
-			if (t_rate > nms_thres) {
-				if (t_area <= q_area && t_target->life==1) {
-					toDelete[i] = true;
+			float nms_thres_low = 0.5;
+			float nms_thres_high = 0.9;
+			if (t_rate > nms_thres_low) {
+				if (t_rate < nms_thres_high) {
+					if (t_area <= q_area && (trackers[i].life == 1)) {
+						toDelete[i] = true;
+					}
+				}
+				else {
+					if (t_area <= q_area) {
+						toDelete[i] = true;
+					}
 				}
 			}
-			if (q_rate > nms_thres) {
-				if (q_area < t_area && toDelete[i] == false && q_target->life==1) {
-					toDelete[j] = true;
+			if (q_rate > nms_thres_low) {
+				if (q_rate < nms_thres_high) {
+					if (q_area < t_area && toDelete[i] == false && (trackers[j].life == 1)) {
+						toDelete[j] = true;
+					}
+				}
+				else {
+					if (q_area < t_area && toDelete[i] == false) {
+						toDelete[j] = true;
+					}
 				}
 			}
 		}
