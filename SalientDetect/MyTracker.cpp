@@ -28,7 +28,7 @@ cv::Rect MyTracker::update(cv::Mat & image, float thres)
 {
 	cv::Rect res=mTracker.update(image);
 	if (mTracker.psr < thres)
-		mTracker.interp_factor = mTracker.base_lr * 1;
+		mTracker.interp_factor = mTracker.base_lr * 2;
 	else
 		mTracker.interp_factor = mTracker.base_lr;
 	pTarget->directx = res.x - pTarget->x;

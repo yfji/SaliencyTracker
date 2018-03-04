@@ -9,6 +9,8 @@ public:
 
 	cv::Mat findPeakRectArea(cv::Mat& im);
 	std::vector<cv::Rect> parseCandidatePatches(cv::Mat& im);
+	void nms(std::vector<cv::Rect>& boxes);
+	void merge(std::vector<cv::Rect>& boxes);
 
 private:
 	const int block_w = 5;
@@ -18,7 +20,5 @@ private:
 	cv::Mat kernel;
 	cv::Mat patchKernel;
 	cv::Mat getPatch(cv::Mat& im, cv::Rect& rect);
-	void nms(std::vector<cv::Rect>& boxes);
-	void merge(std::vector<cv::Rect>& boxes);
 };
 

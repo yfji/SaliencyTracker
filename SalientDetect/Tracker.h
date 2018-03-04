@@ -18,7 +18,7 @@ private:
 	void trackThreadRef(MyTracker& t, cv::Mat& im);
 	void trackThreadPtr(MyTracker* t, cv::Mat* im);
 public:
-	void addTarget(int x, int y, int w, int h);
+	int addTarget(int x, int y, int w, int h);
 	void updateTarget(std::shared_ptr<target>& t, int x, int y, int w, int h, int directx, int directy, int dist, float score = 0.0, target* prev = nullptr);
 	void removeTarget(int uuid);
 
@@ -33,6 +33,8 @@ private:
 	int filter_len;
 	int cur_index;
 	int tracker_num;
+	int tracker_id;
+	int target_num;
 	const int max_diff = 30;
 	float psr_thres{ 0.5f };
 	const int nForceUpdate = 6;

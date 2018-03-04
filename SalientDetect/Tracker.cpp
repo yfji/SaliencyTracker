@@ -5,6 +5,8 @@
 Tracker::Tracker()
 {
 	tracker_num = 0;
+	target_num = 0;
+	tracker_id = 0;
 }
 
 
@@ -12,15 +14,29 @@ Tracker::~Tracker()
 {
 }
 
-void Tracker::addTarget(int x, int y, int w, int h)
+int Tracker::addTarget(int x, int y, int w, int h)
 {
-	std::shared_ptr<target> t=std::make_shared<target>();
-	t->x = x;
-	t->y = y;
-	t->width = w;
-	t->height = h;
-	t->uuid = targets.size();
-	targets.push_back(t);
+	for (auto i = 0; i < targets.size(); ++i) {
+		if (targets[i]->b_new == false && targets[i]->life == 0) {
+			updateTarget(targets[i], x, y, w, h, 0, 0, 1e4);
+			targets[i]->b_new = true;
+			targets[i]->life = 1;
+			targets[i]->uuid = target_num++;
+			return i;
+		}
+	}
+	if (tracker_id+1 < MAX_N)
+	{
+		std::shared_ptr<target> t = std::make_shared<target>();
+		t->x = x;
+		t->y = y;
+		t->width = w;
+		t->height = h;
+		t->uuid = target_num++;
+		targets.push_back(t);
+		return targets.size() - 1;
+	}
+	return MAX_N-1;
 }
 
 void Tracker::updateTarget(std::shared_ptr<target>& t, int x, int y, int w, int h, int directx, int directy, int dist, float score, target* prev)
@@ -64,7 +80,7 @@ void Tracker::detect_filter(cv::Mat & curFrame)
 		//		box_new = false;
 		//	}
 		//}
-		for (auto j = 0; j < tracker_num; ++j) {
+		for (auto j = 0; j <= tracker_id; ++j) {
 			MyTracker& tracker = trackers[j];
 			std::shared_ptr<target>& t = tracker.pTarget;
 			// int dist= abs(t_box.x - t->x) + abs(t_box.y - t->y);
@@ -79,21 +95,22 @@ void Tracker::detect_filter(cv::Mat & curFrame)
 			}
 		}
 		if (box_new) {
-			addTarget(t_box.x, t_box.y, t_box.width, t_box.height);
+			int t_id=addTarget(t_box.x, t_box.y, t_box.width, t_box.height);
 			bool recycle = false;
-			for (auto k = 0; k < tracker_num; ++k) {
+			for (auto k = 0; k <= tracker_id; ++k) {
 				if (trackers[k].state == sleeping) {
 					recycle = true;
-					trackers[k].init(t_box, curFrame, k, targets.size() - 1);
-					trackers[k].pTarget = targets[targets.size() - 1];
+					trackers[k].init(t_box, curFrame, k, target_num-1);
+					trackers[k].pTarget = targets[t_id];
 					break;
 				}
 			}
 			if (!recycle) {
-				if (tracker_num < MAX_N) {
-					trackers[tracker_num].init(t_box, curFrame, tracker_num, targets.size()-1);
-					trackers[tracker_num].pTarget = targets[targets.size() - 1];
+				if (tracker_id+1 < MAX_N) {
+					trackers[tracker_id+1].init(t_box, curFrame, tracker_num, target_num-1);
+					trackers[tracker_id+1].pTarget = targets[t_id];
 					++tracker_num;
+					++tracker_id;
 				}
 			}
 		}
@@ -117,6 +134,7 @@ void Tracker::trackThreadRef(MyTracker& t, cv::Mat& im)
 	}
 	if (t.puzzleFrames == nRecycle) {
 		t.recycle();
+		tracker_num = max(0, tracker_num - 1);
 	}
 }
 
@@ -127,13 +145,17 @@ void Tracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
 	//std::cout << "tracker " << t->trackerId << " psr: " << psr << std::endl;
 	if (psr < psr_thres) {
 		t->puzzleFrames++;
-		t->update_by_detect = true;
 	}
-	if (t->puzzleFrames % nForceUpdate==0) {
+	else {
+		t->puzzleFrames = max(0, t->puzzleFrames - 1);
+	}
+	if (t->puzzleFrames>0 && t->puzzleFrames % nForceUpdate==0) {
+		//t->update_by_detect = true;
 		t->forceUpdate();
 	}
 	if (t->puzzleFrames == nRecycle) {
 		t->recycle();
+		tracker_num = max(0, tracker_num - 1);
 	}
 }
 
@@ -142,7 +164,7 @@ void Tracker::track(cv::Mat& curFrame) {
 	if (targets.size() == 0)
 		return;
 	if (cur_index != 0) {
-		for (auto i = 0; i < tracker_num; ++i) {
+		for (auto i = 0; i <= tracker_id; ++i) {
 			MyTracker& t = trackers[i];
 			if (t.state == sleeping)
 				continue;
@@ -153,7 +175,7 @@ void Tracker::track(cv::Mat& curFrame) {
 #endif
 		}
 #if MULTI_THREAD==1
-		for (auto i = 0; i < tracker_num; ++i) {
+		for (auto i = 0; i <= tracker_id; ++i) {
 			if (mThreads[i].joinable()) {
 				mThreads[i].join();
 			}
@@ -169,7 +191,7 @@ void Tracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 {
 	bool use_tracking = true;
 	if (use_tracking) {
-		for (auto i = 0; i < tracker_num; ++i) {
+		for (auto i = 0; i <= tracker_id; ++i) {
 			MyTracker& t = trackers[i];
 			if (t.pTarget->life == 0 || t.state==sleeping)
 				continue;
@@ -200,18 +222,19 @@ void Tracker::initTrackers(cv::Mat& image)
 		trackers[i].pTarget = t;
 	}
 	tracker_num = min(targets.size(), MAX_N);
+	tracker_id = tracker_num - 1;
 	std::cout << "init tracker num: " << tracker_num << std::endl;
 }
 
 void Tracker::nms()
 {
-	std::vector<bool> toDelete(tracker_num, false);
-	for (auto i = 0; i < tracker_num; ++i) {
+	std::vector<bool> toDelete(tracker_id+1, false);
+	for (auto i = 0; i <= tracker_id; ++i) {
 		if (toDelete[i] || trackers[i].state==sleeping)
 			continue;
 		std::shared_ptr<target>& t_target = trackers[i].pTarget;
 		auto t_area = t_target->width*t_target->height;
-		for (auto j = i + 1; j < tracker_num; ++j) {
+		for (auto j = i + 1; j <= tracker_id; ++j) {
 			if (toDelete[j] || trackers[j].state == sleeping)
 				continue;
 			std::shared_ptr<target>& q_target = trackers[j].pTarget;
@@ -223,27 +246,27 @@ void Tracker::nms()
 			auto overlap = max(0, rx - lx)*max(0, ry - ly);
 			auto t_rate = 1.0*overlap / t_area;
 			auto q_rate = 1.0*overlap / q_area;
-			float nms_thres = 0.16;
+			float nms_thres = 0.5;
 			if (t_rate > nms_thres) {
-				if (t_area <= q_area && t_target->life<=q_target->life) {
+				if (t_area <= q_area && t_target->life==1) {
 					toDelete[i] = true;
 				}
 			}
 			if (q_rate > nms_thres) {
-				if (q_area < t_area && toDelete[i] == false && q_target->life<=t_target->life) {
+				if (q_area < t_area && toDelete[i] == false && q_target->life==1) {
 					toDelete[j] = true;
 				}
 			}
 		}
 	}
-	for (auto i = 0; i < tracker_num; ++i) {
+	for (auto i = 0; i <= tracker_id; ++i) {
 		if (toDelete[i]) {
 			trackers[i].recycle();
+			tracker_num = max(0, tracker_num - 1);
 		}
 	}
 }
 
 void Tracker::detectNms()
 {
-
 }
