@@ -27,11 +27,11 @@ void MyTracker::init(cv::Rect & roi, cv::Mat & image, int tracker_id, int targer
 cv::Rect MyTracker::update(cv::Mat & image, float thres)
 {
 	cv::Rect res=mTracker.update(image);
-	//if (mTracker.psr < thres)
-	//	mTracker.interp_factor = mTracker.base_lr * 2;
-	//else
-	//	mTracker.interp_factor = mTracker.base_lr;
-
+	if (mTracker.psr < thres)
+		mTracker.interp_factor = mTracker.base_lr * 2;
+	else
+		mTracker.interp_factor = mTracker.base_lr;
+	//mTracker.interp_factor = mTracker.base_lr / mTracker.psr;
 	pTarget->directx = res.x - pTarget->x;
 	pTarget->directy = res.y - pTarget->y;
 	pTarget->x = res.x;

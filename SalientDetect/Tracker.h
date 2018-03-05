@@ -36,7 +36,7 @@ private:
 	int tracker_id;
 	int target_num;
 	const int max_diff = 30;
-	float psr_thres{ 0.5f };
+	float psr_thres{ 0.7f };
 	const int nForceUpdate = 6;
 	const int nRecycle = 11;
 	float max_psr;

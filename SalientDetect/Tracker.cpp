@@ -249,28 +249,28 @@ void Tracker::nms()
 			float nms_thres_low = 0.5;
 			float nms_thres_high = 0.9;
 			if (t_rate > nms_thres_low) {
-				if (t_rate < nms_thres_high) {
+				//if (t_rate < nms_thres_high) {
 					if (t_area <= q_area && (trackers[i].life == 1)) {
 						toDelete[i] = true;
 					}
-				}
-				else {
-					if (t_area <= q_area) {
-						toDelete[i] = true;
-					}
-				}
+				//}
+				//else {
+				//	if (t_area <= q_area) {
+				//		toDelete[i] = true;
+				//	}
+				//}
 			}
 			if (q_rate > nms_thres_low) {
-				if (q_rate < nms_thres_high) {
+				//if (q_rate < nms_thres_high) {
 					if (q_area < t_area && toDelete[i] == false && (trackers[j].life == 1)) {
 						toDelete[j] = true;
 					}
-				}
-				else {
-					if (q_area < t_area && toDelete[i] == false) {
-						toDelete[j] = true;
-					}
-				}
+				//}
+				//else {
+				//	if (q_area < t_area && toDelete[i] == false) {
+				//		toDelete[j] = true;
+				//	}
+				//}
 			}
 		}
 	}
