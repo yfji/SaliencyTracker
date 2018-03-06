@@ -27,6 +27,10 @@ void MyTracker::init(cv::Rect & roi, cv::Mat & image, int tracker_id, int targer
 cv::Rect MyTracker::update(cv::Mat & image, float thres)
 {
 	cv::Rect res=mTracker.update(image);
+	if (res.width > image.cols / 2 || res.height > image.rows / 2) {
+		recycle();
+		return cv::Rect();
+	}
 	if (mTracker.psr < thres)
 		mTracker.interp_factor = mTracker.base_lr * 2;
 	else

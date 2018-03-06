@@ -1,6 +1,7 @@
 #pragma once
-#include <opencv2\opencv.hpp>
 #include <opencv2\saliency.hpp>
+#include "ann.h"
+#include "featureExtractorSalient.h"
 #include "meanshift/msImageProcessor.h"
 
 class Salient
@@ -36,6 +37,9 @@ private:
 	cv::saliency::MotionSaliencyBinWangApr2014 salientMotion;
 	cv::saliency::StaticSaliencyFineGrained salientFG;
 	
+	std::shared_ptr<FeatureExtractor> ptrExtractor;
+	std::shared_ptr<ANN> nn;
+
 private:
 	inline float gamma(float x) {
 		return x>0.04045 ? pow((x + 0.055f) / 1.055f, 2.4f) : x / 12.92;

@@ -11,3 +11,5 @@
 *.ipdb
 *.db
 *.opendb
+*.model
+*.dll

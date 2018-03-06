@@ -1,8 +1,8 @@
 #include "stdafx.h"
-#include "Tracker.h"
+#include "salientTracker.h"
 #include <sstream>
 
-Tracker::Tracker()
+SalientTracker::SalientTracker()
 {
 	tracker_num = 0;
 	target_num = 0;
@@ -10,11 +10,11 @@ Tracker::Tracker()
 }
 
 
-Tracker::~Tracker()
+SalientTracker::~SalientTracker()
 {
 }
 
-int Tracker::addTarget(int x, int y, int w, int h)
+int SalientTracker::addTarget(int x, int y, int w, int h)
 {
 	for (auto i = 0; i < targets.size(); ++i) {
 		if (targets[i]->b_new == false && targets[i]->life == 0) {
@@ -39,7 +39,7 @@ int Tracker::addTarget(int x, int y, int w, int h)
 	return MAX_N-1;
 }
 
-void Tracker::updateTarget(std::shared_ptr<target>& t, int x, int y, int w, int h, int directx, int directy, int dist, float score, target* prev)
+void SalientTracker::updateTarget(std::shared_ptr<target>& t, int x, int y, int w, int h, int directx, int directy, int dist, float score, target* prev)
 {
 	t->x = x;
 	t->y = y;
@@ -52,11 +52,11 @@ void Tracker::updateTarget(std::shared_ptr<target>& t, int x, int y, int w, int 
 	t->prev = prev;
 }
 
-void Tracker::removeTarget(int uuid)
+void SalientTracker::removeTarget(int uuid)
 {
 }
 
-void Tracker::detect_filter(cv::Mat & curFrame)
+void SalientTracker::detect_filter(cv::Mat & curFrame)
 {
 	std::vector<cv::Rect> bboxes = impl.parseCandidatePatches(curFrame);
 	if (targets.size() == 0) {
@@ -120,7 +120,7 @@ void Tracker::detect_filter(cv::Mat & curFrame)
 	std::cout << "target size: " << targets.size() << "; tracker num: "<<tracker_num << std::endl;
 }
 
-void Tracker::trackThreadRef(MyTracker& t, cv::Mat& im)
+void SalientTracker::trackThreadRef(MyTracker& t, cv::Mat& im)
 {
 	t.update(im, psr_thres);
 	float psr = t.calcPSR();
@@ -138,7 +138,7 @@ void Tracker::trackThreadRef(MyTracker& t, cv::Mat& im)
 	}
 }
 
-void Tracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
+void SalientTracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
 {
 	t->update(*im, psr_thres);
 	float psr = t->calcPSR();
@@ -160,7 +160,7 @@ void Tracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
 }
 
 #define MULTI_THREAD	1
-void Tracker::track(cv::Mat& curFrame) {
+void SalientTracker::track(cv::Mat& curFrame) {
 	if (targets.size() == 0)
 		return;
 	if (cur_index != 0) {
@@ -171,7 +171,7 @@ void Tracker::track(cv::Mat& curFrame) {
 #if MULTI_THREAD==0
 			trackThreadRef(t, curFrame);
 #else
-			mThreads[i]=std::thread (&Tracker::trackThreadPtr, this, &t, &curFrame);
+			mThreads[i]=std::thread (&SalientTracker::trackThreadPtr, this, &t, &curFrame);
 #endif
 		}
 #if MULTI_THREAD==1
@@ -187,7 +187,7 @@ void Tracker::track(cv::Mat& curFrame) {
 	++cur_index;
 }
 
-void Tracker::drawBoundingBox(cv::Mat & curFrame, int scale)
+void SalientTracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 {
 	bool use_tracking = true;
 	if (use_tracking) {
@@ -213,7 +213,7 @@ void Tracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 	}
 }
 
-void Tracker::initTrackers(cv::Mat& image)
+void SalientTracker::initTrackers(cv::Mat& image)
 {
 	for (auto i = 0; i < min(targets.size(),MAX_N); ++i) {
 		std::shared_ptr<target> t = targets[i];
@@ -226,7 +226,7 @@ void Tracker::initTrackers(cv::Mat& image)
 	std::cout << "init tracker num: " << tracker_num << std::endl;
 }
 
-void Tracker::nms()
+void SalientTracker::nms()
 {
 	std::vector<bool> toDelete(tracker_id+1, false);
 	for (auto i = 0; i <= tracker_id; ++i) {
@@ -249,10 +249,13 @@ void Tracker::nms()
 			float nms_thres_low = 0.5;
 			float nms_thres_high = 0.9;
 			if (t_rate > nms_thres_low) {
+				if (t_area <= q_area) {
+					toDelete[i] = true;
+				}
 				//if (t_rate < nms_thres_high) {
-					if (t_area <= q_area && (trackers[i].life == 1)) {
-						toDelete[i] = true;
-					}
+					//if (t_area <= q_area && (trackers[i].life == 1)) {
+					//	toDelete[i] = true;
+					//}
 				//}
 				//else {
 				//	if (t_area <= q_area) {
@@ -261,10 +264,13 @@ void Tracker::nms()
 				//}
 			}
 			if (q_rate > nms_thres_low) {
+				if (q_area < t_area && toDelete[i] == false) {
+					toDelete[j] = true;
+				}
 				//if (q_rate < nms_thres_high) {
-					if (q_area < t_area && toDelete[i] == false && (trackers[j].life == 1)) {
-						toDelete[j] = true;
-					}
+					//if (q_area < t_area && toDelete[i] == false && (trackers[j].life == 1)) {
+					//	toDelete[j] = true;
+					//}
 				//}
 				//else {
 				//	if (q_area < t_area && toDelete[i] == false) {
@@ -282,6 +288,6 @@ void Tracker::nms()
 	}
 }
 
-void Tracker::detectNms()
+void SalientTracker::detectNms()
 {
 }

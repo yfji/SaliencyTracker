@@ -45,9 +45,6 @@
     <ClInclude Include="Implement.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Tracker.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="reader.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -81,12 +78,21 @@
     <ClInclude Include="MyTracker.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ann.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="featureExtractor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="featureExtractorSalient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="salientTracker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SalientDetect.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Salient.cpp">
@@ -107,9 +113,6 @@
     <ClCompile Include="Implement.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Tracker.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="reader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -123,6 +126,21 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MyTracker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ann.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="featureExtractor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="featureExtractorSalient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="salientTracker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

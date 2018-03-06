@@ -1,5 +1,4 @@
 #pragma once
-#include <opencv2\opencv.hpp>
 #include "MyTracker.h"
 #include "target.h"
 #include "Implement.h"
@@ -7,11 +6,11 @@
 #include <thread>
 
 #define MAX_N	20
-class Tracker
+class SalientTracker
 {
 public:
-	Tracker();
-	~Tracker();
+	SalientTracker();
+	~SalientTracker();
 
 private:
 	void initTrackers(cv::Mat& image);
@@ -36,7 +35,7 @@ private:
 	int tracker_id;
 	int target_num;
 	const int max_diff = 30;
-	float psr_thres{ 0.7f };
+	float psr_thres{ 0.5f };
 	const int nForceUpdate = 6;
 	const int nRecycle = 11;
 	float max_psr;

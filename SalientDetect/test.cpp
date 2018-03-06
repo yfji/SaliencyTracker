@@ -50,29 +50,29 @@ void testVideo() {
 	}
 }
 
-void testCvKCF() {
-	int scale = 1;
-	int frameIndex = 0;
-	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence04_files.txt");
-	cv::Ptr<cv::TrackerKCF> kcfTracker = cv::TrackerKCF::create();
-	cv::Rect2d roi;
-	for (auto i = 0; i < file_paths.size(); ++i) {
-		cv::Mat image = cv::imread(file_paths[i]);
-		cv::Mat scaled;
-		cv::resize(image, scaled, cv::Size(image.cols / scale, image.rows / scale));
-		if (frameIndex == 0) {
-			roi=cv::selectROI(scaled);
-			kcfTracker->init(scaled, roi);
-		}
-		else {
-			kcfTracker->update(scaled, roi);
-			cv::rectangle(scaled, roi, cv::Scalar(0, 255, 255), 2);
-		}
-		cv::imshow("frame", scaled);
-		cv::waitKey(30);
-		++frameIndex;
-	}
-}
+//void testCvKCF() {
+//	int scale = 1;
+//	int frameIndex = 0;
+//	std::vector<std::string> file_paths = loadPathFromFile("I:/Experiment/dataset/pafiss_eval_dataset/sequence04_files.txt");
+//	cv::Ptr<cv::TrackerKCF> kcfTracker = cv::TrackerKCF::create();
+//	cv::Rect2d roi;
+//	for (auto i = 0; i < file_paths.size(); ++i) {
+//		cv::Mat image = cv::imread(file_paths[i]);
+//		cv::Mat scaled;
+//		cv::resize(image, scaled, cv::Size(image.cols / scale, image.rows / scale));
+//		if (frameIndex == 0) {
+//			roi=cv::selectROI(scaled);
+//			kcfTracker->init(scaled, roi);
+//		}
+//		else {
+//			kcfTracker->update(scaled, roi);
+//			cv::rectangle(scaled, roi, cv::Scalar(0, 255, 255), 2);
+//		}
+//		cv::imshow("frame", scaled);
+//		cv::waitKey(30);
+//		++frameIndex;
+//	}
+//}
 
 void testKCF() {
 	KCFTracker kcfTracker;
@@ -102,7 +102,7 @@ void testKCF() {
 
 void testTracker() {
 	int scale = 2;
-	Tracker tracker;
+	SalientTracker tracker;
 	std::string path = "I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/car6_files.txt";
 	std::vector<std::string> file_paths = loadPathFromFile(path.c_str());
 	int cnt = 0;
