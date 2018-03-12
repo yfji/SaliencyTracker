@@ -5,7 +5,7 @@
 #include <vector>
 #include <thread>
 
-#define MAX_N	20
+#define MAX_N	5
 class SalientTracker
 {
 public:
@@ -34,10 +34,11 @@ private:
 	int tracker_num;
 	int tracker_id;
 	int target_num;
-	const int max_diff = 30;
-	float psr_thres{ 0.5f };
-	const int nForceUpdate = 6;
-	const int nRecycle = 11;
+	const int max_diff = 50;
+	float psr_thres{ 0.7f };
+	float psr_adapt_thres{ 0.8f };
+	const int nForceUpdate = 10;
+	const int nRecycle = 19;
 	float max_psr;
 	Implement impl;
 	std::vector<std::shared_ptr<target>> targets;
@@ -49,21 +50,21 @@ private:
 		cv::Scalar(0,255,0),
 		cv::Scalar(255,128,128),
 		cv::Scalar(192,128,255),
-		cv::Scalar(255,255,128),
-		cv::Scalar(128,128,0),
-		cv::Scalar(0,128,128),
-		cv::Scalar(64,128,255),
-		cv::Scalar(192,192,192),
-		cv::Scalar(255,128,0),
-		cv::Scalar(64,128,0),
-		cv::Scalar(64,0,64),
-		cv::Scalar(0,0,128),
-		cv::Scalar(192,128,128),
-		cv::Scalar(255,0,255),
-		cv::Scalar(64,128,128),
-		cv::Scalar(0,128,0),
-		cv::Scalar(0,0,0),
-		cv::Scalar(255,255,255)
+		//cv::Scalar(255,255,128),
+		//cv::Scalar(128,128,0),
+		//cv::Scalar(0,128,128),
+		//cv::Scalar(64,128,255),
+		//cv::Scalar(192,192,192),
+		//cv::Scalar(255,128,0),
+		//cv::Scalar(64,128,0),
+		//cv::Scalar(64,0,64),
+		//cv::Scalar(0,0,128),
+		//cv::Scalar(192,128,128),
+		//cv::Scalar(255,0,255),
+		//cv::Scalar(64,128,128),
+		//cv::Scalar(0,128,0),
+		//cv::Scalar(0,0,0),
+		//cv::Scalar(255,255,255)
 	};
 };
 

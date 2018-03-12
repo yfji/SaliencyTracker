@@ -7,7 +7,7 @@ Salient::Salient()
 {
 	ptrExtractor = std::make_shared<FeatureExtractorSalient>();
 	nn = std::make_shared<ANN>();
-	nn->loadParams("./model/param_hog_iter_9000.model");
+	nn->loadParams("./model/param_hog_iter_10000.model");
 	nn->setFeatureExtractorPtr(ptrExtractor);
 }
 
@@ -206,6 +206,7 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 	bool updated = false;
 	max_area = 4e4;
 	min_area = 300;
+	bool use_nn = 1;
 	for (; pContour; pContour = pContour->h_next) {
 		float true_area = fabs(cvContourArea(pContour));
 		cv::Rect bbox = cvBoundingRect(pContour, 0);
@@ -226,16 +227,18 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 			cvSeqRemove(pContour, 0);
 			continue;
 		}
-		int pred;
-		float prob;
-		int pad = 3;
-		cv::Rect detbox = cv::Rect(max(0, bbox.x - pad), max(0, bbox.y - pad), bbox.width + 2*pad, bbox.height + 2*pad);
-		detbox.width = min(im.cols - detbox.x, detbox.width);
-		detbox.height = min(im.rows - detbox.y, detbox.height);
-		nn->predict(im(detbox), pred, prob);
-		if (pred != 0 && pred != 1) {
-			cvSeqRemove(pContour, 0);
-			continue;
+		if (use_nn) {
+			int pred;
+			float prob;
+			int pad = 5;
+			cv::Rect detbox = cv::Rect(max(0, bbox.x - pad), max(0, bbox.y - pad), bbox.width + 2*pad, bbox.height + 2*pad);
+			detbox.width = min(im.cols - detbox.x, detbox.width);
+			detbox.height = min(im.rows - detbox.y, detbox.height);
+			nn->predict(im(detbox), pred, prob);
+			if (pred != 1) {
+				cvSeqRemove(pContour, 0);
+				continue;
+			}
 		}
 		//std::cout << "ratio: " << box_area / true_area << std::endl;
 		boxes.push_back(bbox);
@@ -247,7 +250,7 @@ std::vector<cv::Rect> Salient::findBoundingBoxes(const cv::Mat& im){
 cv::Mat Salient::adaptBinarize(cv::Mat& im) {
 	assert(im.channels() == 1);
 	const int blockSize = 13;
-	const int threshold = 12;
+	const int threshold = 11;
 	const int sz = blockSize*blockSize;
 	int halfSize = blockSize / 2;
 	cv::Rect roi(halfSize, halfSize, im.cols, im.rows);

@@ -86,13 +86,30 @@ void SalientTracker::detect_filter(cv::Mat & curFrame)
 			// int dist= abs(t_box.x - t->x) + abs(t_box.y - t->y);
 			int dist_left = (int)sqrt((t_box.x - t->x)*(t_box.x - t->x) + (t_box.y - t->y)*(t_box.y - t->y));
 			int dist_right = (int)sqrt((t_box.x + t_box.width - t->x - t->width)*(t_box.x + t_box.width - t->x - t->width) + (t_box.y + t_box.height - t->y - t->height)*(t_box.y + t_box.height - t->y - t->height));
-			if (tracker.state != sleeping && (dist_left < max_diff && dist_right<max_diff)&& max(dist_left,dist_right) < t->dist) {
+			//vector<cv::Rect> boxes = { t_box,cv::Rect(t->x,t->y,t->width,t->height) };
+			//impl.nms(boxes, 0.5);
+			//if (tracker.state != sleeping && boxes.size() == 1) {
+			//	if (tracker.update_by_detect) {
+			//		updateTarget(t, t_box.x, t_box.y, t_box.width, t_box.height, t_box.x - t->x, t_box.y - t->y, max(dist_left, dist_right));
+			//		tracker.init(t_box, curFrame, tracker.trackerId, tracker.targetId);
+			//	}
+			//	box_new = false;
+			//}
+			//if (tracker.state != sleeping && (dist_left < max_diff || dist_right<max_diff)&& min(dist_left,dist_right) < t->dist) {
+			//	if (tracker.update_by_detect) {
+			//		updateTarget(t, t_box.x, t_box.y, t_box.width, t_box.height, t_box.x - t->x, t_box.y - t->y, min(dist_left, dist_right));
+			//		tracker.init(t_box, curFrame, tracker.trackerId, tracker.targetId);
+			//	}
+			//	box_new = false;
+			//}
+			if (tracker.state != sleeping && (dist_left < max_diff) && dist_left < t->dist) {
 				if (tracker.update_by_detect) {
-					updateTarget(t, t_box.x, t_box.y, t_box.width, t_box.height, t_box.x - t->x, t_box.y - t->y, max(dist_left, dist_right));
+					updateTarget(t, t_box.x, t_box.y, t_box.width, t_box.height, t_box.x - t->x, t_box.y - t->y, dist_left);
 					tracker.init(t_box, curFrame, tracker.trackerId, tracker.targetId);
 				}
 				box_new = false;
 			}
+
 		}
 		if (box_new) {
 			int t_id=addTarget(t_box.x, t_box.y, t_box.width, t_box.height);
@@ -140,7 +157,7 @@ void SalientTracker::trackThreadRef(MyTracker& t, cv::Mat& im)
 
 void SalientTracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
 {
-	t->update(*im, psr_thres);
+	t->update(*im, psr_adapt_thres);
 	float psr = t->calcPSR();
 	//std::cout << "tracker " << t->trackerId << " psr: " << psr << std::endl;
 	if (psr < psr_thres) {

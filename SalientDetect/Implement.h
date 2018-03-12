@@ -9,7 +9,7 @@ public:
 
 	cv::Mat findPeakRectArea(cv::Mat& im);
 	std::vector<cv::Rect> parseCandidatePatches(cv::Mat& im);
-	void nms(std::vector<cv::Rect>& boxes);
+	void nms(std::vector<cv::Rect>& boxes, float thres=0.25);
 	void merge(std::vector<cv::Rect>& boxes);
 
 private:

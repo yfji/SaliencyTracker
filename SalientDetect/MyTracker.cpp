@@ -32,7 +32,7 @@ cv::Rect MyTracker::update(cv::Mat & image, float thres)
 		return cv::Rect();
 	}
 	if (mTracker.psr < thres)
-		mTracker.interp_factor = mTracker.base_lr * 2;
+		mTracker.interp_factor = mTracker.base_lr * 2.5;
 	else
 		mTracker.interp_factor = mTracker.base_lr;
 	//mTracker.interp_factor = mTracker.base_lr / mTracker.psr;
@@ -62,5 +62,5 @@ void MyTracker::forceUpdate()
 	state = puzzled;
 	// puzzleFrames = 0;
 	update_by_detect = true;
-	life = 0;
+	//life = 0;
 }

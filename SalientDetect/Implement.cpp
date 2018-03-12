@@ -107,7 +107,7 @@ cv::Mat Implement::findPeakRectArea(cv::Mat& im) {
 	return toDown;
 }
 
-void Implement::nms(std::vector<cv::Rect>& boxes) {
+void Implement::nms(std::vector<cv::Rect>& boxes, float thres) {
 	std::vector<bool> toDelete(boxes.size(), false);
 	for (auto i = 0; i < boxes.size(); ++i) {
 		if (toDelete[i])
@@ -124,12 +124,12 @@ void Implement::nms(std::vector<cv::Rect>& boxes) {
 			auto overlap = max(0, rx - lx)*max(0, ry - ly);
 			auto t_rate = 1.0*overlap / t_area;
 			auto q_rate = 1.0*overlap / q_area;
-			if (t_rate > 0.25) {
+			if (t_rate > thres) {
 				if (t_area <= q_area) {
 					toDelete[i] = true;
 				}
 			}
-			if (q_rate > 0.25) {
+			if (q_rate > thres) {
 				if (q_area < t_area && toDelete[i]==false){
 					toDelete[j] = true;
 					//std::cout << "box " << i << " nms" << std::endl;

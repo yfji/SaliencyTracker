@@ -139,7 +139,7 @@ KCFTracker::KCFTracker(bool hog, bool fixed_window, bool multiscale, bool lab)
     if (multiscale) { // multiscale
         template_size = 96;
         //template_size = 100;
-        scale_step = 1.05;
+        scale_step = 1.15;
         scale_weight = 0.95;
         if (!fixed_window) {
             //printf("Multiscale does not support non-fixed window.\n");
@@ -190,24 +190,36 @@ cv::Rect KCFTracker::update(cv::Mat& image)
         float new_peak_value;
         cv::Point2f new_res = detect(_tmpl, getFeatures(image, 0, 1.0f / scale_step), new_peak_value);
 
-        if (scale_weight * new_peak_value > peak_value) {
-            res = new_res;
-            peak_value = new_peak_value;
-            _scale /= scale_step;
-            _roi.width /= scale_step;
-            _roi.height /= scale_step;
-        }
+		for (auto i = 0; i < pyr_size; ++i) {
+			new_res = detect(_tmpl, getFeatures(image, 0, pyr_scale_steps[i]), new_peak_value);
 
-        // Test at a bigger _scale
-        new_res = detect(_tmpl, getFeatures(image, 0, scale_step), new_peak_value);
+			if (scale_weight * new_peak_value > peak_value) {
+			    res = new_res;
+			    peak_value = new_peak_value;
+			    _scale *= pyr_scale_steps[i];
+				_roi.width *= pyr_scale_steps[i];
+			    _roi.height *= pyr_scale_steps[i];
+			}
 
-        if (scale_weight * new_peak_value > peak_value) {
-            res = new_res;
-            peak_value = new_peak_value;
-            _scale *= scale_step;
-            _roi.width *= scale_step;
-            _roi.height *= scale_step;
-        }
+		}
+        //if (scale_weight * new_peak_value > peak_value) {
+        //    res = new_res;
+        //    peak_value = new_peak_value;
+        //    _scale /= scale_step;
+        //    _roi.width /= scale_step;
+        //    _roi.height /= scale_step;
+        //}
+
+        //// Test at a bigger _scale
+        //new_res = detect(_tmpl, getFeatures(image, 0, scale_step), new_peak_value);
+
+        //if (scale_weight * new_peak_value > peak_value) {
+        //    res = new_res;
+        //    peak_value = new_peak_value;
+        //    _scale *= scale_step;
+        //    _roi.width *= scale_step;
+        //    _roi.height *= scale_step;
+        //}
     }
 
     // Adjust by cell size and _scale

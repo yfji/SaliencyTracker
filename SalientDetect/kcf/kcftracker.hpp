@@ -112,7 +112,8 @@ public:
     int template_size; // template size
     float scale_step; // scale step for multi-scale estimation
     float scale_weight;  // to downweight detection scores of other scales for added stability
-
+	const int pyr_size = 5;
+	const float pyr_scale_steps[5] = { 0.90f,0.95f,1.02f,1.08f,1.15f };
 protected:
     // Detect object in the current frame.
     cv::Point2f detect(cv::Mat z, cv::Mat x, float &peak_value);
