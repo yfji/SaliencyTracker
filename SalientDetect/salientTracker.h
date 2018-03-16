@@ -2,10 +2,11 @@
 #include "MyTracker.h"
 #include "target.h"
 #include "Implement.h"
+#include <fstream>
 #include <vector>
 #include <thread>
 
-#define MAX_N	5
+#define MAX_N	10
 class SalientTracker
 {
 public:
@@ -24,6 +25,7 @@ public:
 	void detect_filter(cv::Mat& curFrame);
 	void track(cv::Mat& curFrame);
 	void drawBoundingBox(cv::Mat& curFrame, int scale=2);
+	void saveResults(ofstream& out, const string& filename);
 
 	void nms();
 	void detectNms();
@@ -34,11 +36,13 @@ private:
 	int tracker_num;
 	int tracker_id;
 	int target_num;
-	const int max_diff = 50;
+	int gScale;
+	const int max_diff = 20;
 	float psr_thres{ 0.7f };
+	float psr_thres_lower{ 0.55f };
 	float psr_adapt_thres{ 0.8f };
-	const int nForceUpdate = 10;
-	const int nRecycle = 19;
+	const int nForceUpdate = 4;
+	const int nRecycle = 6;
 	float max_psr;
 	Implement impl;
 	std::vector<std::shared_ptr<target>> targets;
@@ -50,11 +54,11 @@ private:
 		cv::Scalar(0,255,0),
 		cv::Scalar(255,128,128),
 		cv::Scalar(192,128,255),
-		//cv::Scalar(255,255,128),
-		//cv::Scalar(128,128,0),
-		//cv::Scalar(0,128,128),
-		//cv::Scalar(64,128,255),
-		//cv::Scalar(192,192,192),
+		cv::Scalar(255,255,128),
+		cv::Scalar(128,128,0),
+		cv::Scalar(0,128,128),
+		cv::Scalar(64,128,255),
+		cv::Scalar(192,192,192),
 		//cv::Scalar(255,128,0),
 		//cv::Scalar(64,128,0),
 		//cv::Scalar(64,0,64),

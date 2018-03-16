@@ -103,12 +103,17 @@ void testKCF() {
 void testTracker() {
 	int scale = 2;
 	SalientTracker tracker;
-	std::string path = "I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/car6_files.txt";
+	//std::string path = "I:/Experiment/dataset/Dataset_UAV123_10fps/UAV123_10fps/data_seq/UAV123_10fps/car6_files.txt";
+	std::string path = "I:/Experiment/dataset/pafiss_eval_dataset/sequence04_files.txt";
 	std::vector<std::string> file_paths = loadPathFromFile(path.c_str());
 	int cnt = 0;
 	auto start = std::chrono::high_resolution_clock::now();
 	char key = 0;
 	int frameIndex = 0;
+	const char* result_file = "sequence04_result.txt";
+	ofstream out;
+	out.open(result_file, ios::out);
+
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
 		cv::Mat scaled;
@@ -118,6 +123,7 @@ void testTracker() {
 		tracker.track(scaled);
 		tracker.nms();
 		tracker.drawBoundingBox(image, scale);
+		tracker.saveResults(out, file_paths[i]);
 		auto now = std::chrono::high_resolution_clock::now();
 		double duration_ns = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now - start).count();
 		double seconds = duration_ns / 1e9;
@@ -131,4 +137,5 @@ void testTracker() {
 			break;
 		++frameIndex;
 	}
+	out.close();
 }

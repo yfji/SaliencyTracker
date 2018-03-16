@@ -158,19 +158,28 @@ void SalientTracker::trackThreadRef(MyTracker& t, cv::Mat& im)
 void SalientTracker::trackThreadPtr(MyTracker * t, cv::Mat * im)
 {
 	t->update(*im, psr_adapt_thres);
+	cv::Rect box = cv::Rect(t->pTarget->x,t->pTarget->y,t->pTarget->width, t->pTarget->height);
+	if (0 - box.x > box.width / 2 || 0 - box.y > box.height / 2) {
+		t->recycle();
+		tracker_num = max(0, tracker_num - 1);
+		return;
+	}
 	float psr = t->calcPSR();
 	//std::cout << "tracker " << t->trackerId << " psr: " << psr << std::endl;
-	if (psr < psr_thres) {
+	if (psr < psr_thres && psr>psr_thres_lower) {
 		t->puzzleFrames++;
+	}
+	else if (psr < psr_thres_lower) {
+		t->puzzleFrames+=2;
 	}
 	else {
 		t->puzzleFrames = max(0, t->puzzleFrames - 1);
 	}
-	if (t->puzzleFrames>0 && t->puzzleFrames % nForceUpdate==0) {
+	if (t->puzzleFrames>0 && t->puzzleFrames >= nForceUpdate) {
 		//t->update_by_detect = true;
 		t->forceUpdate();
 	}
-	if (t->puzzleFrames == nRecycle) {
+	if (t->puzzleFrames >= nRecycle) {
 		t->recycle();
 		tracker_num = max(0, tracker_num - 1);
 	}
@@ -207,6 +216,7 @@ void SalientTracker::track(cv::Mat& curFrame) {
 void SalientTracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 {
 	bool use_tracking = true;
+	gScale = scale;
 	if (use_tracking) {
 		for (auto i = 0; i <= tracker_id; ++i) {
 			MyTracker& t = trackers[i];
@@ -226,6 +236,21 @@ void SalientTracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 				continue;
 			cv::Rect roi(t->x*scale, t->y*scale, t->width*scale, t->height*scale);
 			cv::rectangle(curFrame, roi, cv::Scalar(0, 255, 255), 2);
+		}
+	}
+}
+
+void SalientTracker::saveResults(ofstream & out, const string& filename)
+{
+	out << '[' << filename << "]\n";
+	for (auto i = 0; i < MAX_N; ++i) {
+		MyTracker& tracker = trackers[i];
+		if (tracker.state != sleeping) {
+			stringstream ss;
+			shared_ptr<target>& pTarget = tracker.pTarget;
+			ss << "t" << tracker.trackerId<<":"<<pTarget->x*gScale<<' '<<pTarget->y*gScale <<' '<<pTarget->x*gScale +pTarget->width*gScale <<' '<<pTarget->y*gScale +pTarget->height*gScale;
+			ss << '\n';
+			out << ss.str();
 		}
 	}
 }
