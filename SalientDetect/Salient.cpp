@@ -98,6 +98,7 @@ cv::Mat Salient::salientDetectFT(cv::Mat& im) {
 	}
 	cv::normalize(salMap, salMap, 0, 1, cv::NORM_MINMAX);
 	salMap.convertTo(salMap, CV_8UC1, 255);
+	//cv::imshow("salient", salMap);
 	return salMap;
 }
 

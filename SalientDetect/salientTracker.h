@@ -6,7 +6,7 @@
 #include <vector>
 #include <thread>
 
-#define MAX_N	10
+#define MAX_N	6
 class SalientTracker
 {
 public:
@@ -55,10 +55,10 @@ private:
 		cv::Scalar(255,128,128),
 		cv::Scalar(192,128,255),
 		cv::Scalar(255,255,128),
-		cv::Scalar(128,128,0),
-		cv::Scalar(0,128,128),
-		cv::Scalar(64,128,255),
-		cv::Scalar(192,192,192),
+		//cv::Scalar(128,128,0),
+		//cv::Scalar(0,128,128),
+		//cv::Scalar(64,128,255),
+		//cv::Scalar(192,192,192),
 		//cv::Scalar(255,128,0),
 		//cv::Scalar(64,128,0),
 		//cv::Scalar(64,0,64),

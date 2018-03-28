@@ -117,14 +117,14 @@ void SalientTracker::detect_filter(cv::Mat & curFrame)
 			for (auto k = 0; k <= tracker_id; ++k) {
 				if (trackers[k].state == sleeping) {
 					recycle = true;
-					trackers[k].init(t_box, curFrame, k, target_num-1);
+					trackers[k].init(t_box, curFrame, trackers[k].trackerId, target_num-1);
 					trackers[k].pTarget = targets[t_id];
 					break;
 				}
 			}
 			if (!recycle) {
 				if (tracker_id+1 < MAX_N) {
-					trackers[tracker_id+1].init(t_box, curFrame, tracker_num, target_num-1);
+					trackers[tracker_id+1].init(t_box, curFrame, tracker_id+1, target_num-1);
 					trackers[tracker_id+1].pTarget = targets[t_id];
 					++tracker_num;
 					++tracker_id;
@@ -225,7 +225,7 @@ void SalientTracker::drawBoundingBox(cv::Mat & curFrame, int scale)
 			cv::Rect roi(t.pTarget->x*scale, t.pTarget->y*scale, t.pTarget->width*scale, t.pTarget->height*scale);
 			cv::rectangle(curFrame, roi, colors[t.trackerId], 2);
 			std::stringstream ss;
-			ss << "tracker " << i<<" : "<<t.psr;
+			ss << "tracker " << t.trackerId<<" : "<<t.psr;
 			cv::putText(curFrame, ss.str(), cv::Point(roi.x - 15, roi.y), cv::FONT_HERSHEY_PLAIN, 0.9, colors[t.trackerId]);
 		}
 	}
@@ -248,7 +248,7 @@ void SalientTracker::saveResults(ofstream & out, const string& filename)
 		if (tracker.state != sleeping) {
 			stringstream ss;
 			shared_ptr<target>& pTarget = tracker.pTarget;
-			ss << "t" << tracker.trackerId<<":"<<pTarget->x*gScale<<' '<<pTarget->y*gScale <<' '<<pTarget->x*gScale +pTarget->width*gScale <<' '<<pTarget->y*gScale +pTarget->height*gScale;
+			ss << "t" << tracker.targetId+1<<":"<<pTarget->x*gScale<<' '<<pTarget->y*gScale <<' '<<pTarget->x*gScale +pTarget->width*gScale <<' '<<pTarget->y*gScale +pTarget->height*gScale;
 			ss << '\n';
 			out << ss.str();
 		}

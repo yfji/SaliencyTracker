@@ -10,7 +10,7 @@ void testDetector() {
 	cv::Mat biMap = salient.adaptBinarize(salMap);
 	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, 1));
 
-	cv::erode(biMap, biMap, kernel);
+	//cv::erode(biMap, biMap, kernel);
 	cv::imshow("bi", biMap);
 	auto now = std::chrono::high_resolution_clock::now();
 	double duration_ns = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now - start).count();
@@ -111,9 +111,9 @@ void testTracker() {
 	char key = 0;
 	int frameIndex = 0;
 	const char* result_file = "sequence04_result.txt";
+	const char* save_dir = "I:/Experiment/dataset/result/sequence04/";
 	ofstream out;
 	out.open(result_file, ios::out);
-
 	for (auto i = 0; i < file_paths.size(); ++i) {
 		cv::Mat image = cv::imread(file_paths[i]);
 		cv::Mat scaled;
@@ -132,6 +132,9 @@ void testTracker() {
 		ss << "fps: " << fps;
 		cv::putText(image, ss.str(), cv::Point(image.cols - 200, 20), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(0,255,255),2);
 		cv::imshow("frame", image);
+		ss.str("");
+		ss << save_dir << "frame_" << frameIndex << ".jpg";
+		cv::imwrite(ss.str(), image);
 		key=cv::waitKey(1);
 		if (key == 27)
 			break;
